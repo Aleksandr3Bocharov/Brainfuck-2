@@ -1,0 +1,168 @@
+* Copyright 2023 Aleksandr Bocharov
+* Distributed under the Boost Software License, Version 1.0.
+* See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
+* 2023-05-21
+
+/*
+
+Модуль "Vector" написан на языке программирования Рефал-5-Лямбда.
+https://github.com/bmstu-iu9/refal-5-lambda
+
+Модуль "Vector" реализует абстрактный тип данных Vector -
+динамический массив выражений [Vector e.Vector] и функции для работы с ним.
+
+e.Vector ::= (e.Value)*
+e.Value ::= e.ANY-EXPR
+
+*/
+
+*$FROM LibraryEx
+$EXTERN Map, Reduce, Inc;
+
+$ENUM Vector;
+
+/*
+
+<VectorNew e.Source> == [Vector e.Vector]
+
+e.Source ::= (e.Value)*
+e.DefaultValue ::= e.ANY-EXPR
+e.Vector ::= (e.Value)*
+e.Value ::= e.ANY-EXPR
+
+*/
+$ENTRY VectorNew {
+  e.Source =
+    [Vector <Map {(e.Value) = (e.Value)} e.Source>] 
+}
+
+/*
+
+<VectorInit s.Len e.Fill> == [Vector e.Vector]
+
+s.Len ::= s.NUMBER
+e.Fill= e.ANY-EXPR
+e.Vector ::= (e.Value)*
+e.Value ::= e.ANY-EXPR
+
+*/
+$ENTRY VectorInit {
+  s.Len e.Fill =
+    [Vector <DoVectorInit 0 s.Len e.Fill>] 
+}
+
+
+DoVectorInit {
+  s.Len s.Len e._ = /* empty */;
+  s.Index s.Len e.Fill =
+    (e.Fill) <DoVectorInit <Inc s.Index> s.Len e.Fill>
+}
+
+/*
+
+<VectorFill t.Vector e.Fill> == [Vector e.NewVector]
+
+t.Vector ::= [Vector e.Vector]
+e.Vector, e.NewVector ::= (e.Value)*
+e.Value ::= e.ANY-EXPR
+e.Fill= e.ANY-EXPR
+
+*/
+$ENTRY VectorFill {
+  [Vector e.Vector]  e.Fill =
+    [Vector <Map {(e._) = (e.Fill)} e.Vector>]
+}
+
+/*
+
+<VectorGetAll t.Vector> == e.Vector
+
+t.Vector ::= [Vector e.Vector]
+e.Vector ::= (e.Value)*
+e.Value ::= e.ANY-EXPR
+
+*/
+$ENTRY VectorGetAll {
+  [Vector e.Vector]  = e.Vector    
+}
+
+/*
+
+<VectorInsert t.Vector s.Index e.Fill> == [Vector e.NewVector]
+
+t.Vector ::= [Vector e.Vector]
+e.Vector, e.NewVector ::= (e.Value)*
+e.Value, e.Fill ::= e.ANY-EXPR
+s.Index ::= s.NUMBER
+
+*/
+$ENTRY VectorInsert {
+  [Vector e.Vector] 0 e.Fill = [Vector (e.Fill) e.Vector];
+  [Vector e.Vector-B (e.Value) e.Vector-E] s.Index e.Fill,
+  <Reduce {s.Ind t._ = <Inc s.Ind>} 0 e.Vector-B>:s.Index =
+    [Vector e.Vector-B (e.Fill) (e.Value) e.Vector-E];
+  [Vector e.Vector] s.Index e.Fill,
+  <Reduce {s.Ind t._ = <Inc s.Ind>} 0 e.Vector>:s.Index =
+    [Vector e.Vector (e.Fill)]
+}
+
+/*
+
+<VectorRemove t.Vector s.Index> == [Vector e.NewVector]
+
+t.Vector ::= [Vector e.Vector]
+e.Vector, e.NewVector ::= (e.Value)*
+e.Value, e.NewValue ::= e.ANY-EXPR
+s.Index ::= s.NUMBER
+
+*/
+$ENTRY VectorRemove {
+  [Vector e.Vector-B (e._) e.Vector-E] s.Index,
+  <Reduce {s.Ind t._ = <Inc s.Ind>} 0 e.Vector-B>:s.Index =
+    [Vector e.Vector-B e.Vector-E]
+}
+
+/*
+
+<VectorSet t.Vector s.Index e.NewValue> == [Vector e.NewVector]
+
+t.Vector ::= [Vector e.Vector]
+e.Vector, e.NewVector ::= (e.Value)*
+e.Value, e.NewValue ::= e.ANY-EXPR
+s.Index ::= s.NUMBER
+
+*/
+$ENTRY VectorSet {
+  [Vector e.Vector-B (e._) e.Vector-E] s.Index e.NewValue,
+  <Reduce {s.Ind t._ = <Inc s.Ind>} 0 e.Vector-B>:s.Index =
+    [Vector e.Vector-B (e.NewValue) e.Vector-E]
+}
+
+/*
+
+<VectorGet t.Vector s.Index> == e.Value
+
+t.Vector ::= [Vector e.Vector]
+e.Vector ::= (e.Value)*
+e.Value ::= e.ANY-EXPR
+s.Index ::= s.NUMBER
+
+*/
+$ENTRY VectorGet {
+  [Vector e.Vector-B (e.Value) e.Vector-E] s.Index,
+  <Reduce {s.Ind t._ = <Inc s.Ind>} 0 e.Vector-B>:s.Index =
+    e.Value
+}
+
+/*
+
+<VectorLength t.Vector> == s.Len
+
+t.Vector ::= [Vector e.Vector]
+e.Vector ::= (e.Value)*
+s.Len ::= s.NUMBER
+
+*/
+$ENTRY VectorLength {
+  [Vector e.Vector] = <Reduce {s.Index t.Value = <Inc s.Index>} 0 e.Vector>
+}

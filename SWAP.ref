@@ -1,0 +1,60 @@
+* Copyright 2023 Aleksandr Bocharov
+* Distributed under the Boost Software License, Version 1.0.
+* See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
+* 2023-05-21
+
+/*
+
+Модуль "SWAP" написан на языке программирования Рефал-5-Лямбда.
+https://github.com/bmstu-iu9/refal-5-lambda
+
+Модуль "SWAP" реализует функции для работы 
+со статическими ящиками.
+
+*/
+
+
+*$FROM LibraryEx
+$EXTERN Fetch, Apply;
+
+/*
+
+<GetSWAP s.Swap>== e.Value
+
+s.Swap ::= s.FUNCTION
+e.Value ::= e.ANY-EXPR
+
+*/
+$ENTRY GetSWAP {
+  s.Swap =
+    <Fetch
+      <Apply s.Swap>
+      {
+        e.Value =
+          e.Value 
+          <SetSWAP s.Swap e.Value>  
+      }
+    >
+}
+
+/*
+
+<Nil e.ANY-EXPR> == *empty*  
+
+*/
+Nil { 
+  e._ = /* empty */
+}
+
+/*
+
+<SetSWAP s.Swap e.NewValue>== *empty*
+
+s.Swap ::= s.FUNCTION
+e.NewValue ::= e.ANY-EXPR
+
+*/
+$ENTRY SetSWAP {
+  s.Swap e.NewValue =
+    <Nil <Apply s.Swap e.NewValue>> 
+}
