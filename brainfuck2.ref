@@ -4,6 +4,9 @@
 * 2023-05-21
 
 /* 
+
+Brainfuck 2
+
 Программа "Brainfuck 2" написана на языке программирования Рефал-5-Лямбда.
 https://github.com/bmstu-iu9/refal-5-lambda
 
@@ -12,11 +15,11 @@ https://github.com/bmstu-iu9/refal-5-lambda
 
 
 ИСПОЛЬЗОВАНИЕ:
-    brainfuck [filename[.bf]]
+    brainfuck2 [filename[.bf]]
 
 
 где
-    filename        Имя файла исходного файла и файла назначения.
+    filename        Имя исходного файла и файла назначения.
 
 
 Имя по умолчанию исходного файла 'brainfuck.bf'
@@ -53,9 +56,9 @@ Help {
         '\nПрограмма "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла \'filename.bf\'\n'
         'и компилирует его в код на языке C в файл назначения \'filename.bf.c\'.\n\n\n'
         'ИСПОЛЬЗОВАНИЕ:\n'
-        '    brainfuck [filename[.bf]]\n\n\n'
+        '    brainfuck2 [filename[.bf]]\n\n\n'
         'где\n'
-        '    filename        Имя файла исходного файла и файла назначения.\n\n\n'
+        '    filename        Имя исходного файла и файла назначения.\n\n\n'
         'Имя по умолчанию исходного файла \'brainfuck.bf\'\n'
         'и файла назначения \'brainfuck.bf.c\'.\n\n\n'
         'Если исходный файл \'filename.bf\' не существует,\n'
