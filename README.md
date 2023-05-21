@@ -1,4 +1,4 @@
-# Brainfuck2
+# Brainfuck 2
 Программа "Brainfuck 2" написана на языке программирования Рефал-5-Лямбда.
 https://github.com/bmstu-iu9/refal-5-lambda
 
@@ -7,11 +7,11 @@ https://github.com/bmstu-iu9/refal-5-lambda
 
 
 ИСПОЛЬЗОВАНИЕ:
-    brainfuck [filename[.bf]]
+    brainfuck2 [filename[.bf]]
 
 
 где
-    filename        Имя файла исходного файла и файла назначения.
+    filename        Имя исходного файла и файла назначения.
 
 
 Имя по умолчанию исходного файла 'brainfuck.bf'
