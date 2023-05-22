@@ -31,7 +31,7 @@ e.Source ::= (e.Value)*
 */
 $ENTRY VectorNew {
   e.Source =
-    [Vector <DelAccumulator <MapAccum {s.Index (e.Value) = <Inc s.Index> (s.Index e.Value)} 0 e.Source>>] 
+    [Vector <DelAccumulator <MapAccum {s.Ind (e.Val) = <Inc s.Ind> (s.Ind e.Val)} 0 e.Source>>] 
 }
 
 /*
@@ -62,7 +62,7 @@ t.Vector ::= [Vector e.Vector]
 
 */
 $ENTRY VectorGetAll {
-  [Vector e.Vector]  = <Map {(s.Index e.Value) = (e.Value)} e.Vector>    
+  [Vector e.Vector]  = <Map {(s.Ind e.Val) = (e.Val)} e.Vector>    
 }
 
 /*

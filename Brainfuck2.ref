@@ -1,0 +1,347 @@
+* Copyright 2023 Aleksandr Bocharov
+* Distributed under the Boost Software License, Version 1.0.
+* See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
+* 2023-05-21
+
+/* 
+
+Brainfuck 2
+
+Программа "Brainfuck 2" написана на языке программирования Рефал-5-Лямбда.
+https://github.com/bmstu-iu9/refal-5-lambda
+
+Программа "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла 'filename.bf'
+и компилирует его в код на языке C в файл назначения 'filename.bf.c'.
+
+
+ИСПОЛЬЗОВАНИЕ:
+    brainfuck2 [filename[.bf]]
+
+
+где
+    filename        Имя исходного файла и файла назначения.
+
+
+Имя по умолчанию исходного файла 'brainfuck.bf'
+и файла назначения 'brainfuck.bf.c'.
+
+
+Если исходный файл 'filename.bf' не существует,
+то происходит FATAL_ERROR(1) и программа завершает работу.
+
+
+Файл назначения 'filename.bf.c' будет перезаписан, если он существует.
+
+
+
+*/
+
+*$FROM stdio
+$EXTERN Putchar, Getchar, RU;
+
+*$FROM LibraryEx
+$EXTERN Fetch, Pipe, Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec;
+
+*$FROM SWAP
+$EXTERN SetSWAP, GetSWAP;
+
+*$FROM Vector
+$EXTERN VectorNew, VectorSet, VectorGet, VectorInsert, VectorRemove, VectorLength, VectorGetAll;
+
+
+* Вывод справки
+Help {
+  = <Prout
+      <RU
+        '\nПрограмма "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла \'filename.bf\'\n'
+        'и компилирует его в код на языке C в файл назначения \'filename.bf.c\'.\n\n\n'
+        'ИСПОЛЬЗОВАНИЕ:\n'
+        '    brainfuck2 [filename[.bf]]\n\n\n'
+        'где\n'
+        '    filename        Имя исходного файла и файла назначения.\n\n\n'
+        'Имя по умолчанию исходного файла \'brainfuck.bf\'\n'
+        'и файла назначения \'brainfuck.bf.c\'.\n\n\n'
+        'Если исходный файл \'filename.bf\' не существует,\n'
+        'то происходит FATAL_ERROR(1) и программа завершает работу.\n\n\n'
+        'Файл назначения \'filename.bf.c\' будет перезаписан, если он существует.\n\n\n'
+      >
+    >
+}
+
+*Номер текущей ячейки и бесконечная лента типа Vector из ячеек со значениями в диапазоне 0-255
+$SWAP CurrentCell, Cells;
+
+/*
+
+<Interpretator e.Tokenize_Code> == * empty *
+
+e.Tokenize_Code ::= e.Token*
+e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
+s.BracketLevel ::= s.NUMBER
+
+*/
+Interpretator {
+  e.Tokenize_Code =	
+    <SetSWAP &CurrentCell 0>
+    <SetSWAP &Cells <VectorNew (0)>>
+    <Prout>
+    <DoInterpretator e.Tokenize_Code>
+    <SetSWAP &Cells <VectorNew>>
+}
+
+DoInterpretator {
+  /* empty */ =	/* empty */;
+  Next e.Rest_Tokenize_Code,
+  <Compare (<Inc <GetSWAP &CurrentCell>>) <VectorLength <GetSWAP &Cells>>>:'0' = 
+    <SetSWAP &CurrentCell  <Inc <GetSWAP &CurrentCell>>>
+    <SetSWAP &Cells <VectorInsert <GetSWAP &Cells> <GetSWAP &CurrentCell> 0>>
+    <DoInterpretator e.Rest_Tokenize_Code>;
+  Next e.Rest_Tokenize_Code = 
+    <SetSWAP &CurrentCell  <Inc <GetSWAP &CurrentCell>>>
+    <DoInterpretator e.Rest_Tokenize_Code>;
+  Prev e.Rest_Tokenize_Code, <GetSWAP &CurrentCell>:0 = 
+    <SetSWAP &Cells <VectorInsert <GetSWAP &Cells> 0 0>>
+    <DoInterpretator e.Rest_Tokenize_Code>;
+  Prev e.Rest_Tokenize_Code = 
+    <SetSWAP &CurrentCell  <Dec <GetSWAP &CurrentCell>>>
+    <DoInterpretator e.Rest_Tokenize_Code>;
+  Inc e.Rest_Tokenize_Code = 
+    <GetSWAP &CurrentCell>:s.CurrentCell = 
+    <VectorGet <GetSWAP &Cells> s.CurrentCell>:
+	  {
+      255 = 
+        <SetSWAP &Cells <VectorSet <GetSWAP &Cells> s.CurrentCell 0>>;
+      s.Value =
+        <SetSWAP &Cells <VectorSet <GetSWAP &Cells> s.CurrentCell <Inc s.Value>>>
+	  }:e._ =
+    <DoInterpretator e.Rest_Tokenize_Code>;									
+  Dec e.Rest_Tokenize_Code = 
+    <GetSWAP &CurrentCell>:s.CurrentCell = 
+    <VectorGet <GetSWAP &Cells> s.CurrentCell>:
+	  {
+      0	=
+        <SetSWAP &Cells <VectorSet <GetSWAP &Cells> s.CurrentCell 255>>;
+      s.Value =
+        <SetSWAP &Cells <VectorSet <GetSWAP &Cells> s.CurrentCell <Dec s.Value>>>
+	  }:e._ =
+    <DoInterpretator e.Rest_Tokenize_Code>;	
+  Print e.Rest_Tokenize_Code =
+    <Putchar <Chr <VectorGet <GetSWAP &Cells> <GetSWAP &CurrentCell>>>>
+	  <DoInterpretator e.Rest_Tokenize_Code>;														
+  Read e.Rest_Tokenize_Code =
+    <SetSWAP &Cells <VectorSet <GetSWAP &Cells> <GetSWAP &CurrentCell> <Ord <Getchar>>>>
+    <DoInterpretator e.Rest_Tokenize_Code>;							
+  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code	=
+    <VectorGet <GetSWAP &Cells> <GetSWAP &CurrentCell>>:
+    {
+      0	= <DoInterpretator e.Rest_Tokenize_Code>;
+      s._ =	
+        <DoInterpretator e.OpenClose>
+        <DoInterpretator Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code> 
+	  }																																	
+}
+
+/*
+
+<CompiletoC e.Tokenize_Code> == t.C_Code
+
+e.Tokenize_Code ::= e.Token*
+e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
+s.BracketLevel ::= s.NUMBER
+
+t.C_Code ::= (CHAR+)
+
+*/
+CompiletoC {
+  e.Tokenize_Code =
+    (
+      '#include <memory.h>\n'
+      '#include <stdio.h>\n\n'
+      'int main(void)\n'
+      '{\n'
+      '     int i = 0;\n'
+      '     unsigned char arr[30000];\n'
+  	  '     memset(arr, 0, sizeof(arr));\n'
+      <DoCompiletoC ('     ') e.Tokenize_Code>
+      '}'
+	)	
+}
+
+DoCompiletoC {
+  (e.Spaces) /* empty */ = /* empty */;
+  (e.Spaces) Next e.Rest_Tokenize_Code =
+    e.Spaces 'i++;\n' <DoCompiletoC (e.Spaces) e.Rest_Tokenize_Code>;
+  (e.Spaces) Prev e.Rest_Tokenize_Code =
+    e.Spaces 'i--;\n' <DoCompiletoC (e.Spaces) e.Rest_Tokenize_Code>;
+  (e.Spaces) Inc e.Rest_Tokenize_Code =
+    e.Spaces 'arr[i]++;\n' <DoCompiletoC (e.Spaces) e.Rest_Tokenize_Code>;
+  (e.Spaces) Dec e.Rest_Tokenize_Code =
+    e.Spaces 'arr[i]--;\n' <DoCompiletoC (e.Spaces) e.Rest_Tokenize_Code>;
+  (e.Spaces) Print e.Rest_Tokenize_Code =
+    e.Spaces 'putchar(arr[i]);\n' <DoCompiletoC (e.Spaces) e.Rest_Tokenize_Code>;
+  (e.Spaces) Read e.Rest_Tokenize_Code =
+    e.Spaces 'arr[i] = getchar();\n' <DoCompiletoC (e.Spaces) e.Rest_Tokenize_Code>;
+  (e.Spaces) Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code =
+    e.Spaces 'while(arr[i])\n' 
+    e.Spaces '{\n' 
+    <DoCompiletoC (e.Spaces '     ') e.OpenClose>
+    e.Spaces '}\n' 
+    <DoCompiletoC (e.Spaces) e.Rest_Tokenize_Code>
+}
+
+/* 
+
+<Tokenizer e.Symbols> == e.Tokenize_Code
+<Tokenizer e.Symbols> == e.Errors
+
+e.Symbols ::= (s.Char s.Row s.Col)* 
+s.Char ::= s.CHAR; s.Row ::= s.NUMBER; s.Col  ::= s.NUMBER
+
+e.Tokenize_Code ::= e.Token*
+e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
+s.BracketLevel ::= s.NUMBER
+
+e.Errors ::= Fails (Error e.ErrorMessage)+
+e.ErrorMessage ::= s.CHAR+
+
+*/
+Tokenizer {
+  e.Symbols, <BracketsCheck e.Symbols>: Fails e.Errors = Fails e.Errors;
+  e.Symbols =
+    <DelAccumulator
+      <MapAccum 
+        {
+          s.BracketLevel (s.Char e.RowCol), s.Char:'[' =
+            <Inc s.BracketLevel> Open  <Inc s.BracketLevel>;
+          s.BracketLevel (s.Char e.RowCol), s.Char:']' =
+            <Dec s.BracketLevel> Close  s.BracketLevel; 
+          s.BracketLevel (s.Char e.RowCol), s.Char:'>' = 
+            s.BracketLevel Next; 
+          s.BracketLevel (s.Char e.RowCol), s.Char:'<' =
+            s.BracketLevel Prev; 
+          s.BracketLevel (s.Char e.RowCol), s.Char:'+' =
+            s.BracketLevel Inc; 
+          s.BracketLevel (s.Char e.RowCol), s.Char:'-' =
+            s.BracketLevel Dec;
+          s.BracketLevel (s.Char e.RowCol), s.Char:'.' =
+            s.BracketLevel Print;
+          s.BracketLevel (s.Char e.RowCol), s.Char:',' =
+            s.BracketLevel Read;
+          s.BracketLevel (s.Char e.RowCol) =
+            s.BracketLevel /* empty */
+        } 
+        0 e.Symbols
+      >
+    >
+}
+
+* Для проверки синтаксических ошибок
+$SWAP RowCols;
+
+/*
+
+<BracketsCheck e.Symbols> == e.Errors
+<BracketsCheck e.Symbols> == Success
+
+e.Symbols ::= (s.Char s.Row s.Col)* 
+s.Char ::= s.CHAR; s.Row ::= s.NUMBER; s.Col  ::= s.NUMBER
+
+e.Errors ::= Fails (Error e.ErrorMessage)+
+e.ErrorMessage ::= s.CHAR+
+
+*/
+BracketsCheck {
+  e.Symbols	=
+    <SetSWAP &RowCols <VectorNew>>
+    <Map
+      {
+        ('[' s.Row s.Col) =	<SetSWAP &RowCols <VectorInsert <GetSWAP &RowCols> 0 s.Row s.Col>>;
+        (']' s.Row s.Col), <VectorLength <GetSWAP &RowCols>>:0 =
+          (Error <RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' на строке: '> s.Row <RU ', столбце: '> s.Col '.');
+        (']' s.Row s.Col) = <SetSWAP &RowCols <VectorRemove <GetSWAP &RowCols> 0>>;        
+        (e.CharRowCol) = /* empty */
+      }
+      e.Symbols
+    >:
+    {
+      /* empty */, <VectorLength <GetSWAP &RowCols>>:0 =	Success;
+      e.Errors =
+        Fails e.Errors 
+        <Map
+          {
+            (s.Row s.Col) =
+              (Error <RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' на строке: '> s.Row <RU ', столбце: '> s.Col '.')	
+          }
+          <VectorGetAll <GetSWAP &RowCols>>
+        >
+        <SetSWAP &RowCols <VectorNew>>
+    }
+}
+	
+$ENTRY Go {
+  =
+    /* Аргумент программы - имя файла, где находится код Brainfuck.*/
+    <Arg 1>: 
+    /* По умолчанию имя файла - 'brainfuck.bf'. Можно в конце имени файла не добавлять расширение .bf */				
+    { 
+      /* empty */ = 'brainfuck.bf';
+      e.FileName '.bf' = e.FileName '.bf';
+      e.FileName = e.FileName '.bf'
+    }:
+    e.bfFileName =
+    <Help>
+    <Prout <RU 'Код на языке Brainfuck из исходного файла '> e.bfFileName ':\n'>
+    <Fetch
+      e.bfFileName			
+      <Pipe 
+        /* Если файл не существует, то выход из программы. */
+        ExistFile
+        {
+          True = e.bfFileName;
+          False = <Prout <RU 'FATAL_ERROR (1): Файл '> e.bfFileName <RU ' не существует.'>> <Exit 1>
+        }
+        /* Загрузка строк файла в e.Lines ::= (e.Line)*;  e.Line ::= s.CHAR* */
+        LoadFile
+        /* Вывод строк файла на консоль и преобразование строк e.Lines => e.Symbols
+        e.Symbols ::= (s.Char s.Row s.Col)*; s.Char ::= s.CHAR; s.Row ::= s.NUMBER; s.Col  ::= s.NUMBER */
+        (
+          MapAccum 
+            {
+              s.Row (e.Line) =
+                <Inc s.Row> 
+				<Prout s.Row ' ' e.Line>
+                <Fetch
+                  e.Line
+                  <Pipe
+                    (MapAccum {s.Col s.Char = <Inc s.Col> (s.Char s.Row s.Col)} 1)
+                    DelAccumulator
+                  >
+                >	
+            }
+            1
+        )
+        DelAccumulator
+        /* Запуск лексического (синтаксического) анализатора */
+        &Tokenizer
+        {
+          /* Если Fails, то завершение программы */
+          Fails e.Errors =	
+            <Map {(Error e.ErrorMessage) = <Prout e.ErrorMessage>} e.Errors> 
+            <Prout <RU 'FATAL_ERROR (99): Существуют несколько синтаксических ошибок.'>>
+            <Exit 99>;
+          e.Tokenize_Code = 
+            <Fetch
+              e.Tokenize_Code
+              <Pipe 
+                /* Запуск компилятора в код C */
+                &CompiletoC
+                /* Сохранение кода C в файл */
+                (SaveFile (e.bfFileName '.c'))
+                /* Запуск интерпретатора */
+                (&Interpretator e.Tokenize_Code)
+              >
+            >
+        }
+      >
+    >
+}
