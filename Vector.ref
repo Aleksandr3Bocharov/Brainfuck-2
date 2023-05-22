@@ -18,7 +18,7 @@ e.Value ::= e.ANY-EXPR
 */
 
 *$FROM LibraryEx
-$EXTERN Map, MapAccum, DelAccumulator, Inc;
+$EXTERN Map, MapAccum, DelAccumulator, Inc, Dec;
 
 $ENUM Vector;
 
@@ -80,7 +80,7 @@ $ENTRY VectorInsert {
   [Vector e.Vector-B (s.Index e.Value) e.Vector-E] s.Index e.Fill =
     [Vector e.Vector-B (s.Index e.Fill) (<Inc s.Index> e.Value) <Map {(s.Ind e.Val) = (<Inc s.Ind> e.Val)} e.Vector-E>];
   [Vector e.Vector] s.Index e.Fill,
-  <Length [Vector e.Vector]>:s.Index =
+  <VectorLength [Vector e.Vector]>:s.Index =
     [Vector e.Vector (s.Index e.Fill)]
 }
 
