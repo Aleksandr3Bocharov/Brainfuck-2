@@ -11,13 +11,14 @@ https://github.com/bmstu-iu9/refal-5-lambda
 Модуль "Vector" реализует абстрактный тип данных Vector -
 динамический массив выражений [Vector e.Vector] и функции для работы с ним.
 
-e.Vector ::= (e.Value)*
+e.Vector ::= (s.Index e.Value)*
+s.Index ::= s.NUMBER
 e.Value ::= e.ANY-EXPR
 
 */
 
 *$FROM LibraryEx
-$EXTERN Map, Reduce, Inc;
+$EXTERN Map, MapAccum, DelAccumulator, Inc;
 
 $ENUM Vector;
 
@@ -26,51 +27,31 @@ $ENUM Vector;
 <VectorNew e.Source> == [Vector e.Vector]
 
 e.Source ::= (e.Value)*
-e.DefaultValue ::= e.ANY-EXPR
-e.Vector ::= (e.Value)*
-e.Value ::= e.ANY-EXPR
 
 */
 $ENTRY VectorNew {
   e.Source =
-    [Vector <Map {(e.Value) = (e.Value)} e.Source>] 
+    [Vector <DelAccumulator <MapAccum {s.Index (e.Value) = <Inc s.Index> (s.Index e.Value)} 0 e.Source>>] 
 }
 
 /*
 
-<VectorInit s.Len e.Fill> == [Vector e.Vector]
+<VectorInit s.Length e.Fill> == [Vector e.Vector]
 
-s.Len ::= s.NUMBER
+s.Length ::= s.NUMBER
 e.Fill= e.ANY-EXPR
-e.Vector ::= (e.Value)*
-e.Value ::= e.ANY-EXPR
 
 */
 $ENTRY VectorInit {
-  s.Len e.Fill =
-    [Vector <DoVectorInit 0 s.Len e.Fill>] 
+  s.Length e.Fill =
+    [Vector <DoVectorInit 0 s.Length e.Fill>] 
 }
 
 
 DoVectorInit {
-  s.Len s.Len e._ = /* empty */;
-  s.Index s.Len e.Fill =
-    (e.Fill) <DoVectorInit <Inc s.Index> s.Len e.Fill>
-}
-
-/*
-
-<VectorFill t.Vector e.Fill> == [Vector e.NewVector]
-
-t.Vector ::= [Vector e.Vector]
-e.Vector, e.NewVector ::= (e.Value)*
-e.Value ::= e.ANY-EXPR
-e.Fill= e.ANY-EXPR
-
-*/
-$ENTRY VectorFill {
-  [Vector e.Vector]  e.Fill =
-    [Vector <Map {(e._) = (e.Fill)} e.Vector>]
+  s.Length s.Length e._ = /* empty */;
+  s.Index s.Length e.Fill =
+    (s.Index e.Fill) <DoVectorInit <Inc s.Index> s.Length e.Fill>
 }
 
 /*
@@ -78,12 +59,10 @@ $ENTRY VectorFill {
 <VectorGetAll t.Vector> == e.Vector
 
 t.Vector ::= [Vector e.Vector]
-e.Vector ::= (e.Value)*
-e.Value ::= e.ANY-EXPR
 
 */
 $ENTRY VectorGetAll {
-  [Vector e.Vector]  = e.Vector    
+  [Vector e.Vector]  = <Map {(s.Index e.Value) = (e.Value)} e.Vector>    
 }
 
 /*
@@ -91,19 +70,18 @@ $ENTRY VectorGetAll {
 <VectorInsert t.Vector s.Index e.Fill> == [Vector e.NewVector]
 
 t.Vector ::= [Vector e.Vector]
-e.Vector, e.NewVector ::= (e.Value)*
-e.Value, e.Fill ::= e.ANY-EXPR
 s.Index ::= s.NUMBER
+e.Fill ::= e.ANY-EXPR
 
 */
 $ENTRY VectorInsert {
-  [Vector e.Vector] 0 e.Fill = [Vector (e.Fill) e.Vector];
-  [Vector e.Vector-B (e.Value) e.Vector-E] s.Index e.Fill,
-  <Reduce {s.Ind t._ = <Inc s.Ind>} 0 e.Vector-B>:s.Index =
-    [Vector e.Vector-B (e.Fill) (e.Value) e.Vector-E];
+  [Vector e.Vector] 0 e.Fill =
+    [Vector (0 e.Fill) <Map {(s.Ind e.Val) = (<Inc s.Ind> e.Val)} e.Vector>];
+  [Vector e.Vector-B (s.Index e.Value) e.Vector-E] s.Index e.Fill =
+    [Vector e.Vector-B (s.Index e.Fill) (<Inc s.Index> e.Value) <Map {(s.Ind e.Val) = (<Inc s.Ind> e.Val)} e.Vector-E>];
   [Vector e.Vector] s.Index e.Fill,
-  <Reduce {s.Ind t._ = <Inc s.Ind>} 0 e.Vector>:s.Index =
-    [Vector e.Vector (e.Fill)]
+  <Length [Vector e.Vector]>:s.Index =
+    [Vector e.Vector (s.Index e.Fill)]
 }
 
 /*
@@ -111,15 +89,12 @@ $ENTRY VectorInsert {
 <VectorRemove t.Vector s.Index> == [Vector e.NewVector]
 
 t.Vector ::= [Vector e.Vector]
-e.Vector, e.NewVector ::= (e.Value)*
-e.Value, e.NewValue ::= e.ANY-EXPR
 s.Index ::= s.NUMBER
 
 */
 $ENTRY VectorRemove {
-  [Vector e.Vector-B (e._) e.Vector-E] s.Index,
-  <Reduce {s.Ind t._ = <Inc s.Ind>} 0 e.Vector-B>:s.Index =
-    [Vector e.Vector-B e.Vector-E]
+  [Vector e.Vector-B (s.Index e._) e.Vector-E] s.Index =
+    [Vector e.Vector-B <Map {(s.Ind e.Val) = (<Dec s.Ind> e.Val)} e.Vector-E>]
 }
 
 /*
@@ -127,15 +102,13 @@ $ENTRY VectorRemove {
 <VectorSet t.Vector s.Index e.NewValue> == [Vector e.NewVector]
 
 t.Vector ::= [Vector e.Vector]
-e.Vector, e.NewVector ::= (e.Value)*
-e.Value, e.NewValue ::= e.ANY-EXPR
 s.Index ::= s.NUMBER
+e.NewValue ::= e.ANY-EXPR
 
 */
 $ENTRY VectorSet {
-  [Vector e.Vector-B (e._) e.Vector-E] s.Index e.NewValue,
-  <Reduce {s.Ind t._ = <Inc s.Ind>} 0 e.Vector-B>:s.Index =
-    [Vector e.Vector-B (e.NewValue) e.Vector-E]
+  [Vector e.Vector-B (s.Index e._) e.Vector-E] s.Index e.NewValue =
+    [Vector e.Vector-B (s.Index e.NewValue) e.Vector-E]
 }
 
 /*
@@ -143,26 +116,24 @@ $ENTRY VectorSet {
 <VectorGet t.Vector s.Index> == e.Value
 
 t.Vector ::= [Vector e.Vector]
-e.Vector ::= (e.Value)*
-e.Value ::= e.ANY-EXPR
 s.Index ::= s.NUMBER
+e.Value ::= e.ANY-EXPR
+
 
 */
 $ENTRY VectorGet {
-  [Vector e.Vector-B (e.Value) e.Vector-E] s.Index,
-  <Reduce {s.Ind t._ = <Inc s.Ind>} 0 e.Vector-B>:s.Index =
-    e.Value
+  [Vector e.Vector-B (s.Index e.Value) e.Vector-E] s.Index = e.Value
 }
 
 /*
 
-<VectorLength t.Vector> == s.Len
+<VectorLength t.Vector> == s.Length
 
 t.Vector ::= [Vector e.Vector]
-e.Vector ::= (e.Value)*
-s.Len ::= s.NUMBER
+s.Length ::= s.NUMBER
 
 */
 $ENTRY VectorLength {
-  [Vector e.Vector] = <Reduce {s.Index t.Value = <Inc s.Index>} 0 e.Vector>
+  [Vector /* empty */] = 0;
+  [Vector e.Vector-B (s.Index e._)] = <Inc s.Index>
 }
