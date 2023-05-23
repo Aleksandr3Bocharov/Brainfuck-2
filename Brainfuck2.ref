@@ -1,7 +1,7 @@
 * Copyright 2023 Aleksandr Bocharov
 * Distributed under the Boost Software License, Version 1.0.
 * See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
-* 2023-05-21
+* 2023-05-23
 
 /* 
 
@@ -36,17 +36,18 @@ https://github.com/bmstu-iu9/refal-5-lambda
 
 */
 
-*$FROM stdio
-$EXTERN Putchar, Getchar, RU;
-
 *$FROM LibraryEx
 $EXTERN Fetch, Pipe, Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec;
+
+*$FROM stdio
+$EXTERN Putchar, Getchar, RU;
 
 *$FROM SWAP
 $EXTERN SetSWAP, GetSWAP;
 
 *$FROM Vector
-$EXTERN VectorNew, VectorSet, VectorGet, VectorInsert, VectorRemove, VectorLength, VectorGetAll;
+$EXTERN VectorNew, VectorSet, VectorGet, VectorPushFirst,
+VectorPushLast, VectorPopFirst, VectorLength, VectorGetAll;
 
 
 * Вывод справки
@@ -94,13 +95,13 @@ DoInterpretator {
   Next e.Rest_Tokenize_Code,
   <Compare (<Inc <GetSWAP &CurrentCell>>) <VectorLength <GetSWAP &Cells>>>:'0' = 
     <SetSWAP &CurrentCell  <Inc <GetSWAP &CurrentCell>>>
-    <SetSWAP &Cells <VectorInsert <GetSWAP &Cells> <GetSWAP &CurrentCell> 0>>
+    <SetSWAP &Cells <VectorPushLast <GetSWAP &Cells> 0>>
     <DoInterpretator e.Rest_Tokenize_Code>;
   Next e.Rest_Tokenize_Code = 
     <SetSWAP &CurrentCell  <Inc <GetSWAP &CurrentCell>>>
     <DoInterpretator e.Rest_Tokenize_Code>;
   Prev e.Rest_Tokenize_Code, <GetSWAP &CurrentCell>:0 = 
-    <SetSWAP &Cells <VectorInsert <GetSWAP &Cells> 0 0>>
+    <SetSWAP &Cells <VectorPushFirst <GetSWAP &Cells> 0>>
     <DoInterpretator e.Rest_Tokenize_Code>;
   Prev e.Rest_Tokenize_Code = 
     <SetSWAP &CurrentCell  <Dec <GetSWAP &CurrentCell>>>
@@ -255,16 +256,16 @@ BracketsCheck {
     <SetSWAP &RowCols <VectorNew>>
     <Map
       {
-        ('[' s.Row s.Col) =	<SetSWAP &RowCols <VectorInsert <GetSWAP &RowCols> 0 s.Row s.Col>>;
+        ('[' s.Row s.Col) =	<SetSWAP &RowCols <VectorPushFirst <GetSWAP &RowCols> s.Row s.Col>>;
         (']' s.Row s.Col), <VectorLength <GetSWAP &RowCols>>:0 =
           (Error <RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' на строке: '> s.Row <RU ', столбце: '> s.Col '.');
-        (']' s.Row s.Col) = <SetSWAP &RowCols <VectorRemove <GetSWAP &RowCols> 0>>;        
+        (']' s.Row s.Col) = <SetSWAP &RowCols <VectorPopFirst <GetSWAP &RowCols>>>;        
         (e.CharRowCol) = /* empty */
       }
       e.Symbols
     >:
     {
-      /* empty */, <VectorLength <GetSWAP &RowCols>>:0 =	Success;
+      /* empty */, <VectorLength <GetSWAP &RowCols>>:0 = Success;
       e.Errors =
         Fails e.Errors 
         <Map
