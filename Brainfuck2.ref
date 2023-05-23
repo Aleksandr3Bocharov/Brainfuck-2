@@ -256,10 +256,10 @@ BracketsCheck {
     <SetSWAP &RowCols <VectorNew>>
     <Map
       {
-        ('[' s.Row s.Col) =	<SetSWAP &RowCols <VectorPushFirst <GetSWAP &RowCols> s.Row s.Col>>;
+        ('[' s.Row s.Col) =	<SetSWAP &RowCols <VectorPushLast <GetSWAP &RowCols> s.Row s.Col>>;
         (']' s.Row s.Col), <VectorLength <GetSWAP &RowCols>>:0 =
           (Error <RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' на строке: '> s.Row <RU ', столбце: '> s.Col '.');
-        (']' s.Row s.Col) = <SetSWAP &RowCols <VectorPopFirst <GetSWAP &RowCols>>>;        
+        (']' s.Row s.Col) = <SetSWAP &RowCols <VectorPopLast <GetSWAP &RowCols>>>;        
         (e.CharRowCol) = /* empty */
       }
       e.Symbols
