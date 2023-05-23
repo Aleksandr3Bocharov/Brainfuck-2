@@ -130,6 +130,31 @@ $ENTRY VectorRemove {
 
 /*
 
+<VectorPopFirst t.Vector> == [Vector e.NewVector]
+
+t.Vector ::= [Vector e.Vector]
+
+*/
+$ENTRY VectorPopFirst {
+  [Vector (0 e._) e.Vector-E] =
+    [Vector <Map {(s.Ind e.Val) = (<Dec s.Ind> e.Val)} e.Vector-E>]
+}
+
+
+/*
+
+<VectorPopLast t.Vector> == [Vector e.NewVector]
+
+t.Vector ::= [Vector e.Vector]
+
+*/
+$ENTRY VectorPopLast {
+  [Vector e.Vector-B (s._ e._)] =
+    [Vector e.Vector-B]
+}
+
+/*
+
 <VectorSet t.Vector s.Index e.NewValue> == [Vector e.NewVector]
 
 t.Vector ::= [Vector e.Vector]
