@@ -1,7 +1,7 @@
 * Copyright 2023 Aleksandr Bocharov
 * Distributed under the Boost Software License, Version 1.0.
 * See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
-* 2023-05-21
+* 2023-05-23
 
 /*
 
@@ -75,13 +75,13 @@ e.Fill ::= e.ANY-EXPR
 
 */
 $ENTRY VectorInsert {
-  [Vector e.Vector] 0 e.Fill =
-    [Vector (0 e.Fill) <Map {(s.Ind e.Val) = (<Inc s.Ind> e.Val)} e.Vector>];
+  [Vector /* empty */] 0 e.Fill =
+    [Vector (0 e.Fill)];
   [Vector e.Vector-B (s.Index e.Value) e.Vector-E] s.Index e.Fill =
     [Vector e.Vector-B (s.Index e.Fill) (<Inc s.Index> e.Value) <Map {(s.Ind e.Val) = (<Inc s.Ind> e.Val)} e.Vector-E>];
-  [Vector e.Vector] s.Index e.Fill,
-  <VectorLength [Vector e.Vector]>:s.Index =
-    [Vector e.Vector (s.Index e.Fill)]
+  [Vector e.Vector-B (s.Ind e.Value)] s.Index e.Fill,
+  <Compare <Inc s.Ind> s.Index>:'0' =
+    [Vector e.Vector-B (s.Ind e.Value) (s.Index e.Fill)]
 }
 
 /*
