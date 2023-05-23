@@ -47,7 +47,7 @@ $EXTERN SetSWAP, GetSWAP;
 
 *$FROM Vector
 $EXTERN VectorNew, VectorSet, VectorGet, VectorPushFirst,
-VectorPushLast, VectorPopFirst, VectorLength, VectorGetAll;
+VectorPushLast, VectorPopLast, VectorLength, VectorGetAll;
 
 
 * Вывод справки
