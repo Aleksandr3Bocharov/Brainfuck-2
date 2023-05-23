@@ -86,6 +86,37 @@ $ENTRY VectorInsert {
 
 /*
 
+<VectorPushFirst t.Vector e.Fill> == [Vector e.NewVector]
+
+t.Vector ::= [Vector e.Vector]
+e.Fill ::= e.ANY-EXPR
+
+*/
+$ENTRY VectorPushFirst {
+  [Vector /* empty */] e.Fill =
+    [Vector (0 e.Fill)];
+  [Vector (0 e.Value) e.Vector-E] e.Fill =
+    [Vector (0 e.Fill) (1 e.Value) <Map {(s.Ind e.Val) = (<Inc s.Ind> e.Val)} e.Vector-E>]
+}
+
+
+/*
+
+<VectorPushLast t.Vector e.Fill> == [Vector e.NewVector]
+
+t.Vector ::= [Vector e.Vector]
+e.Fill ::= e.ANY-EXPR
+
+*/
+$ENTRY VectorPushLast {
+  [Vector /* empty */] e.Fill =
+    [Vector (0 e.Fill)];
+  [Vector e.Vector-B (s.Index e.Value)] e.Fill =
+    [Vector e.Vector-B (s.Index e.Value) (<Inc s.Index> e.Fill)]
+}
+
+/*
+
 <VectorRemove t.Vector s.Index> == [Vector e.NewVector]
 
 t.Vector ::= [Vector e.Vector]
@@ -119,10 +150,33 @@ t.Vector ::= [Vector e.Vector]
 s.Index ::= s.NUMBER
 e.Value ::= e.ANY-EXPR
 
-
 */
 $ENTRY VectorGet {
   [Vector e.Vector-B (s.Index e.Value) e.Vector-E] s.Index = e.Value
+}
+
+/*
+
+<VectorGetFirst t.Vector> == e.Value
+
+t.Vector ::= [Vector e.Vector]
+e.Value ::= e.ANY-EXPR
+
+*/
+$ENTRY VectorGetFirst {
+  [Vector (0 e.Value) e.Vector-E] = e.Value
+}
+
+/*
+
+<VectorGetLast t.Vector> == e.Value
+
+t.Vector ::= [Vector e.Vector]
+e.Value ::= e.ANY-EXPR
+
+*/
+$ENTRY VectorGetLast {
+  [Vector e.Vector-B (s.Index e.Value)] = e.Value
 }
 
 /*
