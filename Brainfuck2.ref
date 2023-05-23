@@ -42,9 +42,6 @@ $EXTERN Fetch, Pipe, Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec
 *$FROM stdio
 $EXTERN Putchar, Getchar, RU;
 
-*$FROM SWAP
-$EXTERN SetSWAP, GetSWAP;
-
 *$FROM Vector
 $EXTERN VectorNew, VectorSet, VectorGet, VectorPushFirst,
 VectorPushLast, VectorPopLast, VectorLength, VectorGetAll;
@@ -69,77 +66,65 @@ Help {
     >
 }
 
-*Номер текущей ячейки и бесконечная лента типа Vector из ячеек со значениями в диапазоне 0-255
-$SWAP CurrentCell, Cells;
-
 /*
 
-<Interpretator e.Tokenize_Code> == * empty *
+<Interpretator e.Tokenize_Code> == s.CurrentCell t.Vector
 
 e.Tokenize_Code ::= e.Token*
 e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
 s.BracketLevel ::= s.NUMBER
+s.CurrentCell ::= s.NUMBER
+t.Vector ::= ADT.Vector
 
 */
 Interpretator {
   e.Tokenize_Code =	
-    <SetSWAP &CurrentCell 0>
-    <SetSWAP &Cells <VectorNew (0)>>
-    <Prout>
-    <DoInterpretator e.Tokenize_Code>
-    <SetSWAP &Cells <VectorNew>>
+    <DoInterpretator e.Tokenize_Code 0 <VectorNew (0)>>
 }
 
+/*
+
+<DoInterpretator e.Tokenize_Code s.CurrentCell t.Vector> == s.NewCurrentCell t.NewVector
+
+e.Tokenize_Code ::= e.Token*
+e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
+s.BracketLevel ::= s.NUMBER
+s.CurrentCell, s.NewCurrentCell ::= s.NUMBER
+t.Vector, t.NewVector ::= ADT.Vector
+
+*/
 DoInterpretator {
-  /* empty */ =	/* empty */;
-  Next e.Rest_Tokenize_Code,
-  <Compare (<Inc <GetSWAP &CurrentCell>>) <VectorLength <GetSWAP &Cells>>>:'0' = 
-    <SetSWAP &CurrentCell  <Inc <GetSWAP &CurrentCell>>>
-    <SetSWAP &Cells <VectorPushLast <GetSWAP &Cells> 0>>
-    <DoInterpretator e.Rest_Tokenize_Code>;
-  Next e.Rest_Tokenize_Code = 
-    <SetSWAP &CurrentCell  <Inc <GetSWAP &CurrentCell>>>
-    <DoInterpretator e.Rest_Tokenize_Code>;
-  Prev e.Rest_Tokenize_Code, <GetSWAP &CurrentCell>:0 = 
-    <SetSWAP &Cells <VectorPushFirst <GetSWAP &Cells> 0>>
-    <DoInterpretator e.Rest_Tokenize_Code>;
-  Prev e.Rest_Tokenize_Code = 
-    <SetSWAP &CurrentCell  <Dec <GetSWAP &CurrentCell>>>
-    <DoInterpretator e.Rest_Tokenize_Code>;
-  Inc e.Rest_Tokenize_Code = 
-    <GetSWAP &CurrentCell>:s.CurrentCell = 
-    <VectorGet <GetSWAP &Cells> s.CurrentCell>:
-	  {
-      255 = 
-        <SetSWAP &Cells <VectorSet <GetSWAP &Cells> s.CurrentCell 0>>;
-      s.Value =
-        <SetSWAP &Cells <VectorSet <GetSWAP &Cells> s.CurrentCell <Inc s.Value>>>
-	  }:e._ =
-    <DoInterpretator e.Rest_Tokenize_Code>;									
-  Dec e.Rest_Tokenize_Code = 
-    <GetSWAP &CurrentCell>:s.CurrentCell = 
-    <VectorGet <GetSWAP &Cells> s.CurrentCell>:
-	  {
-      0	=
-        <SetSWAP &Cells <VectorSet <GetSWAP &Cells> s.CurrentCell 255>>;
-      s.Value =
-        <SetSWAP &Cells <VectorSet <GetSWAP &Cells> s.CurrentCell <Dec s.Value>>>
-	  }:e._ =
-    <DoInterpretator e.Rest_Tokenize_Code>;	
-  Print e.Rest_Tokenize_Code =
-    <Putchar <Chr <VectorGet <GetSWAP &Cells> <GetSWAP &CurrentCell>>>>
-	  <DoInterpretator e.Rest_Tokenize_Code>;														
-  Read e.Rest_Tokenize_Code =
-    <SetSWAP &Cells <VectorSet <GetSWAP &Cells> <GetSWAP &CurrentCell> <Ord <Getchar>>>>
-    <DoInterpretator e.Rest_Tokenize_Code>;							
-  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code	=
-    <VectorGet <GetSWAP &Cells> <GetSWAP &CurrentCell>>:
-    {
-      0	= <DoInterpretator e.Rest_Tokenize_Code>;
-      s._ =	
-        <DoInterpretator e.OpenClose>
-        <DoInterpretator Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code> 
-	  }																																	
+  /* empty */ s.CurrentCell t.Vector =	s.CurrentCell t.Vector;
+  Next e.Rest_Tokenize_Code s.CurrentCell t.Vector,
+  <Compare <Inc s.CurrentCell> <VectorLength t.Vector>>:'0' = 
+    <DoInterpretator e.Rest_Tokenize_Code <Inc s.CurrentCell> <VectorPushLast t.Vector 0>>;
+  Next e.Rest_Tokenize_Code s.CurrentCell t.Vector = 
+    <DoInterpretator e.Rest_Tokenize_Code <Inc s.CurrentCell> t.Vector>;
+  Prev e.Rest_Tokenize_Code s.CurrentCell t.Vector,
+  s.CurrentCell:0 = 
+    <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell <VectorPushFirst t.Vector 0>>;
+  Prev e.Rest_Tokenize_Code s.CurrentCell t.Vector = 
+    <DoInterpretator e.Rest_Tokenize_Code <Dec s.CurrentCell> t.Vector>;
+  Inc e.Rest_Tokenize_Code s.CurrentCell t.Vector,
+  <VectorGet t.Vector s.CurrentCell>:255 =
+    <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell 0>>; 
+  Inc e.Rest_Tokenize_Code s.CurrentCell t.Vector =
+    <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell <Inc <VectorGet t.Vector s.CurrentCell>>>>; 							
+  Dec e.Rest_Tokenize_Code s.CurrentCell t.Vector,
+  <VectorGet t.Vector s.CurrentCell>:0 =
+    <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell 255>>; 
+  Dec e.Rest_Tokenize_Code s.CurrentCell t.Vector =
+    <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell <Dec <VectorGet t.Vector s.CurrentCell>>>>; 
+  Print e.Rest_Tokenize_Code s.CurrentCell t.Vector =
+    <Putchar <Chr <VectorGet t.Vector s.CurrentCell>>>
+	  <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell t.Vector>;														
+  Read e.Rest_Tokenize_Code s.CurrentCell t.Vector =
+    <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell <Ord <Getchar>>>>;							
+  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code	s.CurrentCell t.Vector,
+  <VectorGet t.Vector s.CurrentCell>:0 =
+    <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell t.Vector>;
+  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code	s.CurrentCell t.Vector =
+    <DoInterpretator Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code <DoInterpretator e.OpenClose>>   
 }
 
 /*
@@ -149,7 +134,6 @@ DoInterpretator {
 e.Tokenize_Code ::= e.Token*
 e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
 s.BracketLevel ::= s.NUMBER
-
 t.C_Code ::= (CHAR+)
 
 */
@@ -192,22 +176,19 @@ DoCompiletoC {
 
 /* 
 
-<Tokenizer e.Symbols> == e.Tokenize_Code
-<Tokenizer e.Symbols> == e.Errors
+<Tokenizer e.Symbols> == e.Tokenize_Code | e.Errors
 
 e.Symbols ::= (s.Char s.Row s.Col)* 
 s.Char ::= s.CHAR; s.Row ::= s.NUMBER; s.Col  ::= s.NUMBER
-
 e.Tokenize_Code ::= e.Token*
 e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
 s.BracketLevel ::= s.NUMBER
-
 e.Errors ::= Fails (Error e.ErrorMessage)+
 e.ErrorMessage ::= s.CHAR+
 
 */
 Tokenizer {
-  e.Symbols, <BracketsCheck e.Symbols>: Fails e.Errors = Fails e.Errors;
+  e.Symbols, <BracketsCheck e.Symbols <VectorNew>>: Fails e.Errors = Fails e.Errors;
   e.Symbols =
     <DelAccumulator
       <MapAccum 
@@ -236,36 +217,32 @@ Tokenizer {
     >
 }
 
-* Для проверки синтаксических ошибок
-$SWAP RowCols;
-
 /*
 
-<BracketsCheck e.Symbols> == e.Errors
+<BracketsCheck e.Symbols t.Vector> == e.Errors
 <BracketsCheck e.Symbols> == Success
 
 e.Symbols ::= (s.Char s.Row s.Col)* 
 s.Char ::= s.CHAR; s.Row ::= s.NUMBER; s.Col  ::= s.NUMBER
-
+t.Vector ::= ADT.Vector
 e.Errors ::= Fails (Error e.ErrorMessage)+
 e.ErrorMessage ::= s.CHAR+
 
 */
 BracketsCheck {
-  e.Symbols	=
-    <SetSWAP &RowCols <VectorNew>>
+  e.Symbols	t.Vector =
     <Map
       {
-        ('[' s.Row s.Col) =	<SetSWAP &RowCols <VectorPushLast <GetSWAP &RowCols> s.Row s.Col>>;
-        (']' s.Row s.Col), <VectorLength <GetSWAP &RowCols>>:0 =
+        ('[' s.Row s.Col) =	<VectorPushLast t.Vector s.Row s.Col>:t.Vector^ = ;
+        (']' s.Row s.Col), <VectorLength t.Vector>:0 =
           (Error <RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' на строке: '> s.Row <RU ', столбце: '> s.Col '.');
-        (']' s.Row s.Col) = <SetSWAP &RowCols <VectorPopLast <GetSWAP &RowCols>>>;        
+        (']' s.Row s.Col) = <VectorPopLast t.Vector>:t.Vector^ = ;        
         (e.CharRowCol) = /* empty */
       }
       e.Symbols
     >:
     {
-      /* empty */, <VectorLength <GetSWAP &RowCols>>:0 = Success;
+      /* empty */, <VectorLength t.Vector>:0 = Success;
       e.Errors =
         Fails e.Errors 
         <Map
@@ -273,9 +250,8 @@ BracketsCheck {
             (s.Row s.Col) =
               (Error <RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' на строке: '> s.Row <RU ', столбце: '> s.Col '.')	
           }
-          <VectorGetAll <GetSWAP &RowCols>>
+          <VectorGetAll t.Vector>
         >
-        <SetSWAP &RowCols <VectorNew>>
     }
 }
 	
@@ -339,6 +315,7 @@ $ENTRY Go {
                 /* Сохранение кода C в файл */
                 (SaveFile (e.bfFileName '.c'))
                 /* Запуск интерпретатора */
+                Prout
                 (&Interpretator e.Tokenize_Code)
               >
             >
