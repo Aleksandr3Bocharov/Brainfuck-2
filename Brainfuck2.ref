@@ -175,7 +175,7 @@ DoCompiletoC {
 
 /* 
 
-<Tokenizer e.Symbols> == e.Tokenize_Code | e.Errors
+<Tokenizer e.Symbols> == e.Tokenize_Code | Fails e.Errors
 
 e.Symbols ::= (s.Char s.Row s.Col)* 
 s.Char ::= s.CHAR
@@ -183,7 +183,7 @@ s.Row, s.Col ::= s.NUMBER
 e.Tokenize_Code ::= e.Token*
 e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
 s.BracketLevel ::= s.NUMBER
-e.Errors ::= Fails (e.ErrorMessage)+
+e.Errors ::= (e.ErrorMessage)+
 e.ErrorMessage ::= s.CHAR+
 
 */
@@ -219,12 +219,12 @@ Tokenizer {
 
 /*
 
-<BracketsCheck e.Symbols> == Success | e.Errors
+<BracketsCheck e.Symbols> == Success | Fails e.Errors
 
 e.Symbols ::= (s.Char s.Row s.Col)* 
 s.Char ::= s.CHAR
 s.Row, s.Col  ::= s.NUMBER
-e.Errors ::= Fails (e.ErrorMessage)+
+e.Errors ::= (e.ErrorMessage)+
 e.ErrorMessage ::= s.CHAR+
 
 */
@@ -278,7 +278,7 @@ $ENTRY Go {
             {
               s.Row (e.Line) =
                 <Inc s.Row> 
-				<Prout s.Row ' ' e.Line>
+                <Prout s.Row ' ' e.Line>
                 <Fetch
                   e.Line
                   <Pipe
@@ -295,7 +295,7 @@ $ENTRY Go {
         {
           /* Если Fails, то завершение программы */
           Fails e.Errors =	
-            <Map {e.ErrorMessage = <Prout e.ErrorMessage>} e.Errors> 
+            <Map {(e.ErrorMessage) = <Prout e.ErrorMessage>} e.Errors> 
             <Prout <RU 'FATAL_ERROR (99): Существуют несколько синтаксических ошибок.'>>
             <Exit 99>;
           e.Tokenize_Code = 
