@@ -123,7 +123,7 @@ DoInterpretator {
   <VectorGet t.Vector s.CurrentCell>:0 =
     <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell t.Vector>;
   Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code s.CurrentCell t.Vector =
-    <DoInterpretator Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code <DoInterpretator e.OpenClose>>   
+    <DoInterpretator Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code <DoInterpretator e.OpenClose s.CurrentCell t.Vector>>   
 }
 
 /*
@@ -232,18 +232,18 @@ BracketsCheck {
   e.Symbols =
     <Reduce
       {
-        t.Vector ('[' s.Row s.Col) =
-          <VectorPushLast t.Vector <RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'>;
-        t.Vector (']' s.Row s.Col), <VectorLength t.Vector>:0 =
-          <VectorPushLast t.Vector <RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'>;
-        t.Vector (']' s.Row s.Col) = <VectorPopLast t.Vector>;        
-        t.Vector (e.CharRowCol) = t.Vector
+        (t.Vector11 t.Vector12) ('[' s.Row s.Col) =
+          (t.Vector11 <VectorPushLast t.Vector12 <RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'>);
+        (t.Vector11 t.Vector12) (']' s.Row s.Col), <VectorLength t.Vector12>:0 =
+          (<VectorPushLast t.Vector11 <RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'> t.Vector12);
+        (t.Vector11 t.Vector12) (']' s.Row s.Col) = (t.Vector11 <VectorPopLast t.Vector12>);        
+        (t.Vector11 t.Vector12) (e.CharRowCol) = (t.Vector11 t.Vector12)
       }
-      <VectorNew> e.Symbols
+      (<VectorNew> <VectorNew>) e.Symbols
     >:
     {
-      t.Vector, <VectorLength t.Vector>:0 = Success;
-      t.Vector = Fails <VectorGetAll t.Vector>
+      (t.Vector11 t.Vector12), <VectorLength t.Vector11>:0, <VectorLength t.Vector12>:0 = Success;
+      (t.Vector11 t.Vector12) = Fails <VectorGetAll t.Vector11> <VectorGetAll t.Vector12>
     }
 }
 	
