@@ -68,9 +68,9 @@ Help {
 
 /*
 
-<Interpretator e.Tokenize_Code> == s.CurrentCell t.Vector
+<Interpretator e.Parser_Code> == s.CurrentCell t.Vector
 
-e.Tokenize_Code ::= e.Token*
+e.Parser_Code ::= e.Token*
 e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
 s.BracketLevel ::= s.NUMBER
 s.CurrentCell ::= s.NUMBER
@@ -78,14 +78,14 @@ t.Vector ::= ADT.Vector
 
 */
 Interpretator {
-  e.Tokenize_Code = <DoInterpretator e.Tokenize_Code 0 <VectorNew (0)>>
+  e.Parser_Code = <DoInterpretator e.Parser_Code 0 <VectorNew (0)>>
 }
 
 /*
 
-<DoInterpretator e.Tokenize_Code s.CurrentCell t.Vector> == s.NewCurrentCell t.NewVector
+<DoInterpretator e.Parser_Code s.CurrentCell t.Vector> == s.NewCurrentCell t.NewVector
 
-e.Tokenize_Code ::= e.Token*
+e.Parser_Code ::= e.Token*
 e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
 s.BracketLevel ::= s.NUMBER
 s.CurrentCell, s.NewCurrentCell ::= s.NUMBER
@@ -94,50 +94,50 @@ t.Vector, t.NewVector ::= ADT.Vector
 */
 DoInterpretator {
   /* empty */ s.CurrentCell t.Vector = s.CurrentCell t.Vector;
-  Next e.Rest_Tokenize_Code s.CurrentCell t.Vector,
+  Next e.Rest_Parser_Code s.CurrentCell t.Vector,
   <Compare <Inc s.CurrentCell> <VectorLength t.Vector>>:'0' = 
-    <DoInterpretator e.Rest_Tokenize_Code <Inc s.CurrentCell> <VectorPushLast t.Vector 0>>;
-  Next e.Rest_Tokenize_Code s.CurrentCell t.Vector = 
-    <DoInterpretator e.Rest_Tokenize_Code <Inc s.CurrentCell> t.Vector>;
-  Prev e.Rest_Tokenize_Code s.CurrentCell t.Vector,
+    <DoInterpretator e.Rest_Parser_Code <Inc s.CurrentCell> <VectorPushLast t.Vector 0>>;
+  Next e.Rest_Parser_Code s.CurrentCell t.Vector = 
+    <DoInterpretator e.Rest_Parser_Code <Inc s.CurrentCell> t.Vector>;
+  Prev e.Rest_Parser_Code s.CurrentCell t.Vector,
   s.CurrentCell:0 = 
-    <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell <VectorPushFirst t.Vector 0>>;
-  Prev e.Rest_Tokenize_Code s.CurrentCell t.Vector = 
-    <DoInterpretator e.Rest_Tokenize_Code <Dec s.CurrentCell> t.Vector>;
-  Inc e.Rest_Tokenize_Code s.CurrentCell t.Vector,
+    <DoInterpretator e.Rest_Parser_Code s.CurrentCell <VectorPushFirst t.Vector 0>>;
+  Prev e.Rest_Parser_Code s.CurrentCell t.Vector = 
+    <DoInterpretator e.Rest_Parser_Code <Dec s.CurrentCell> t.Vector>;
+  Inc e.Rest_Parser_Code s.CurrentCell t.Vector,
   <VectorGet t.Vector s.CurrentCell>:255 =
-    <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell 0>>; 
-  Inc e.Rest_Tokenize_Code s.CurrentCell t.Vector =
-    <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell <Inc <VectorGet t.Vector s.CurrentCell>>>>; 							
-  Dec e.Rest_Tokenize_Code s.CurrentCell t.Vector,
+    <DoInterpretator e.Rest_Parser_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell 0>>; 
+  Inc e.Rest_Parser_Code s.CurrentCell t.Vector =
+    <DoInterpretator e.Rest_Parser_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell <Inc <VectorGet t.Vector s.CurrentCell>>>>; 							
+  Dec e.Rest_Parser_Code s.CurrentCell t.Vector,
   <VectorGet t.Vector s.CurrentCell>:0 =
-    <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell 255>>; 
-  Dec e.Rest_Tokenize_Code s.CurrentCell t.Vector =
-    <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell <Dec <VectorGet t.Vector s.CurrentCell>>>>; 
-  Print e.Rest_Tokenize_Code s.CurrentCell t.Vector =
+    <DoInterpretator e.Rest_Parser_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell 255>>; 
+  Dec e.Rest_Parser_Code s.CurrentCell t.Vector =
+    <DoInterpretator e.Rest_Parser_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell <Dec <VectorGet t.Vector s.CurrentCell>>>>; 
+  Print e.Rest_Parser_Code s.CurrentCell t.Vector =
     <Putchar <Chr <VectorGet t.Vector s.CurrentCell>>> 
-    <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell t.Vector>;														
-  Read e.Rest_Tokenize_Code s.CurrentCell t.Vector =
-    <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell <Ord <Getchar>>>>;							
-  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code s.CurrentCell t.Vector,
+    <DoInterpretator e.Rest_Parser_Code s.CurrentCell t.Vector>;														
+  Read e.Rest_Parser_Code s.CurrentCell t.Vector =
+    <DoInterpretator e.Rest_Parser_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell <Ord <Getchar>>>>;							
+  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parser_Code s.CurrentCell t.Vector,
   <VectorGet t.Vector s.CurrentCell>:0 =
-    <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell t.Vector>;
-  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code s.CurrentCell t.Vector =
-    <DoInterpretator Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code <DoInterpretator e.OpenClose s.CurrentCell t.Vector>>   
+    <DoInterpretator e.Rest_Parser_Code s.CurrentCell t.Vector>;
+  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parser_Code s.CurrentCell t.Vector =
+    <DoInterpretator Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parser_Code <DoInterpretator e.OpenClose s.CurrentCell t.Vector>>   
 }
 
 /*
 
-<CompiletoC e.Tokenize_Code> == t.C_Code
+<CompiletoC e.Parser_Code> == t.C_Code
 
-e.Tokenize_Code ::= e.Token*
+e.Parser_Code ::= e.Token*
 e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
 s.BracketLevel ::= s.NUMBER
 t.C_Code ::= (s.CHAR+)
 
 */
 CompiletoC {
-  e.Tokenize_Code =
+  e.Parser_Code =
     (
       '#include <memory.h>\n'
       '#include <stdio.h>\n\n'
@@ -146,48 +146,48 @@ CompiletoC {
       '     int i = 0;\n'
       '     unsigned char arr[30000];\n'
   	  '     memset(arr, 0, sizeof(arr));\n'
-      <DoCompiletoC ('     ') e.Tokenize_Code>
+      <DoCompiletoC ('     ') e.Parser_Code>
       '}'
 	)	
 }
 
 DoCompiletoC {
   (e.Spaces) /* empty */ = /* empty */;
-  (e.Spaces) Next e.Rest_Tokenize_Code =
-    e.Spaces 'i++;\n' <DoCompiletoC (e.Spaces) e.Rest_Tokenize_Code>;
-  (e.Spaces) Prev e.Rest_Tokenize_Code =
-    e.Spaces 'i--;\n' <DoCompiletoC (e.Spaces) e.Rest_Tokenize_Code>;
-  (e.Spaces) Inc e.Rest_Tokenize_Code =
-    e.Spaces 'arr[i]++;\n' <DoCompiletoC (e.Spaces) e.Rest_Tokenize_Code>;
-  (e.Spaces) Dec e.Rest_Tokenize_Code =
-    e.Spaces 'arr[i]--;\n' <DoCompiletoC (e.Spaces) e.Rest_Tokenize_Code>;
-  (e.Spaces) Print e.Rest_Tokenize_Code =
-    e.Spaces 'putchar(arr[i]);\n' <DoCompiletoC (e.Spaces) e.Rest_Tokenize_Code>;
-  (e.Spaces) Read e.Rest_Tokenize_Code =
-    e.Spaces 'arr[i] = getchar();\n' <DoCompiletoC (e.Spaces) e.Rest_Tokenize_Code>;
-  (e.Spaces) Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code =
+  (e.Spaces) Next e.Rest_Parser_Code =
+    e.Spaces 'i++;\n' <DoCompiletoC (e.Spaces) e.Rest_Parser_Code>;
+  (e.Spaces) Prev e.Rest_Parser_Code =
+    e.Spaces 'i--;\n' <DoCompiletoC (e.Spaces) e.Rest_Parser_Code>;
+  (e.Spaces) Inc e.Rest_Parser_Code =
+    e.Spaces 'arr[i]++;\n' <DoCompiletoC (e.Spaces) e.Rest_Parser_Code>;
+  (e.Spaces) Dec e.Rest_Parser_Code =
+    e.Spaces 'arr[i]--;\n' <DoCompiletoC (e.Spaces) e.Rest_Parser_Code>;
+  (e.Spaces) Print e.Rest_Parser_Code =
+    e.Spaces 'putchar(arr[i]);\n' <DoCompiletoC (e.Spaces) e.Rest_Parser_Code>;
+  (e.Spaces) Read e.Rest_Parser_Code =
+    e.Spaces 'arr[i] = getchar();\n' <DoCompiletoC (e.Spaces) e.Rest_Parser_Code>;
+  (e.Spaces) Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parser_Code =
     e.Spaces 'while(arr[i])\n' 
     e.Spaces '{\n' 
     <DoCompiletoC (e.Spaces '     ') e.OpenClose>
     e.Spaces '}\n' 
-    <DoCompiletoC (e.Spaces) e.Rest_Tokenize_Code>
+    <DoCompiletoC (e.Spaces) e.Rest_Parser_Code>
 }
 
 /* 
 
-<Tokenizer e.Symbols> == e.Tokenize_Code | Fails e.Errors
+<Parser e.Symbols> == e.Parser_Code | Fails e.Errors
 
 e.Symbols ::= (s.Char s.Row s.Col)* 
 s.Char ::= s.CHAR
 s.Row, s.Col ::= s.NUMBER
-e.Tokenize_Code ::= e.Token*
+e.Parser_Code ::= e.Token*
 e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
 s.BracketLevel ::= s.NUMBER
 e.Errors ::= (e.ErrorMessage)+
 e.ErrorMessage ::= s.CHAR+
 
 */
-Tokenizer {
+Parser {
   e.Symbols, <BracketsCheck e.Symbols>: Fails e.Errors = Fails e.Errors;
   e.Symbols =
     <DelAccumulator
@@ -290,17 +290,17 @@ $ENTRY Go {
             1
         )
         DelAccumulator
-        /* Запуск лексического (синтаксического) анализатора */
-        &Tokenizer
+        /* Запуск лексического и синтаксического анализатора */
+        &Parser
         {
           /* Если Fails, то завершение программы */
           Fails e.Errors =	
             <Map {(e.ErrorMessage) = <Prout e.ErrorMessage>} e.Errors> 
             <Prout <RU 'FATAL_ERROR (99): Существуют несколько синтаксических ошибок.'>>
             <Exit 99>;
-          e.Tokenize_Code = 
+          e.Parser_Code = 
             <Fetch
-              e.Tokenize_Code
+              e.Parser_Code
               <Pipe 
                 /* Запуск компилятора в код C */
                 &CompiletoC
@@ -308,7 +308,7 @@ $ENTRY Go {
                 (SaveFile (e.bfFileName '.c'))
                 /* Запуск интерпретатора */
                 Prout
-                (&Interpretator e.Tokenize_Code)
+                (&Interpretator e.Parser_Code)
               >
             >
         }
