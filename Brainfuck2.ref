@@ -37,7 +37,7 @@ https://github.com/bmstu-iu9/refal-5-lambda
 */
 
 *$FROM LibraryEx
-$EXTERN Fetch, Pipe, Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec;
+$EXTERN Fetch, Pipe, Map, Reduce, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec;
 
 *$FROM stdio
 $EXTERN Putchar, Getchar, RU;
@@ -78,8 +78,7 @@ t.Vector ::= ADT.Vector
 
 */
 Interpretator {
-  e.Tokenize_Code =	
-    <DoInterpretator e.Tokenize_Code 0 <VectorNew (0)>>
+  e.Tokenize_Code = <DoInterpretator e.Tokenize_Code 0 <VectorNew (0)>>
 }
 
 /*
@@ -94,7 +93,7 @@ t.Vector, t.NewVector ::= ADT.Vector
 
 */
 DoInterpretator {
-  /* empty */ s.CurrentCell t.Vector =	s.CurrentCell t.Vector;
+  /* empty */ s.CurrentCell t.Vector = s.CurrentCell t.Vector;
   Next e.Rest_Tokenize_Code s.CurrentCell t.Vector,
   <Compare <Inc s.CurrentCell> <VectorLength t.Vector>>:'0' = 
     <DoInterpretator e.Rest_Tokenize_Code <Inc s.CurrentCell> <VectorPushLast t.Vector 0>>;
@@ -116,14 +115,14 @@ DoInterpretator {
   Dec e.Rest_Tokenize_Code s.CurrentCell t.Vector =
     <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell <Dec <VectorGet t.Vector s.CurrentCell>>>>; 
   Print e.Rest_Tokenize_Code s.CurrentCell t.Vector =
-    <Putchar <Chr <VectorGet t.Vector s.CurrentCell>>>
-	  <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell t.Vector>;														
+    <Putchar <Chr <VectorGet t.Vector s.CurrentCell>>> 
+    <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell t.Vector>;														
   Read e.Rest_Tokenize_Code s.CurrentCell t.Vector =
     <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell <VectorSet t.Vector s.CurrentCell <Ord <Getchar>>>>;							
-  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code	s.CurrentCell t.Vector,
+  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code s.CurrentCell t.Vector,
   <VectorGet t.Vector s.CurrentCell>:0 =
     <DoInterpretator e.Rest_Tokenize_Code s.CurrentCell t.Vector>;
-  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code	s.CurrentCell t.Vector =
+  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code s.CurrentCell t.Vector =
     <DoInterpretator Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Tokenize_Code <DoInterpretator e.OpenClose>>   
 }
 
@@ -179,16 +178,17 @@ DoCompiletoC {
 <Tokenizer e.Symbols> == e.Tokenize_Code | e.Errors
 
 e.Symbols ::= (s.Char s.Row s.Col)* 
-s.Char ::= s.CHAR; s.Row ::= s.NUMBER; s.Col  ::= s.NUMBER
+s.Char ::= s.CHAR
+s.Row, s.Col ::= s.NUMBER
 e.Tokenize_Code ::= e.Token*
 e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
 s.BracketLevel ::= s.NUMBER
-e.Errors ::= Fails (Error e.ErrorMessage)+
+e.Errors ::= Fails (e.ErrorMessage)+
 e.ErrorMessage ::= s.CHAR+
 
 */
 Tokenizer {
-  e.Symbols, <BracketsCheck e.Symbols <VectorNew>>: Fails e.Errors = Fails e.Errors;
+  e.Symbols, <BracketsCheck e.Symbols>: Fails e.Errors = Fails e.Errors;
   e.Symbols =
     <DelAccumulator
       <MapAccum 
@@ -219,39 +219,31 @@ Tokenizer {
 
 /*
 
-<BracketsCheck e.Symbols t.Vector> == e.Errors
-<BracketsCheck e.Symbols> == Success
+<BracketsCheck e.Symbols> == Success | e.Errors
 
 e.Symbols ::= (s.Char s.Row s.Col)* 
-s.Char ::= s.CHAR; s.Row ::= s.NUMBER; s.Col  ::= s.NUMBER
-t.Vector ::= ADT.Vector
-e.Errors ::= Fails (Error e.ErrorMessage)+
+s.Char ::= s.CHAR
+s.Row, s.Col  ::= s.NUMBER
+e.Errors ::= Fails (e.ErrorMessage)+
 e.ErrorMessage ::= s.CHAR+
 
 */
 BracketsCheck {
-  e.Symbols	t.Vector =
-    <Map
+  e.Symbols =
+    <Reduce
       {
-        ('[' s.Row s.Col) =	<VectorPushLast t.Vector s.Row s.Col>:t.Vector^ = ;
-        (']' s.Row s.Col), <VectorLength t.Vector>:0 =
-          (Error <RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' на строке: '> s.Row <RU ', столбце: '> s.Col '.');
-        (']' s.Row s.Col) = <VectorPopLast t.Vector>:t.Vector^ = ;        
-        (e.CharRowCol) = /* empty */
+        t.Vector ('[' s.Row s.Col) =
+          <VectorPushLast t.Vector <RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'>;
+        t.Vector (']' s.Row s.Col), <VectorLength t.Vector>:0 =
+          <VectorPushLast t.Vector <RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'>;
+        t.Vector (']' s.Row s.Col) = <VectorPopLast t.Vector>;        
+        t.Vector (e.CharRowCol) = t.Vector
       }
-      e.Symbols
+      <VectorNew> e.Symbols
     >:
     {
-      /* empty */, <VectorLength t.Vector>:0 = Success;
-      e.Errors =
-        Fails e.Errors 
-        <Map
-          {
-            (s.Row s.Col) =
-              (Error <RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' на строке: '> s.Row <RU ', столбце: '> s.Col '.')	
-          }
-          <VectorGetAll t.Vector>
-        >
+      t.Vector, <VectorLength t.Vector>:0 = Success;
+      t.Vector = Fails <VectorGetAll t.Vector>
     }
 }
 	
@@ -303,7 +295,7 @@ $ENTRY Go {
         {
           /* Если Fails, то завершение программы */
           Fails e.Errors =	
-            <Map {(Error e.ErrorMessage) = <Prout e.ErrorMessage>} e.Errors> 
+            <Map {e.ErrorMessage = <Prout e.ErrorMessage>} e.Errors> 
             <Prout <RU 'FATAL_ERROR (99): Существуют несколько синтаксических ошибок.'>>
             <Exit 99>;
           e.Tokenize_Code = 
