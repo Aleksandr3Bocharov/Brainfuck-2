@@ -193,44 +193,55 @@ Parser {
       {
         (t.Vector11 t.Vector12 s.BracketLevel) ('[' s.Row s.Col) =
           (
-	    t.Vector11
-	    <VectorPushLast t.Vector12 <RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'>
-	    <Inc s.BracketLevel>
-	  )
-	  Open  <Inc s.BracketLevel>;
+            t.Vector11
+            <VectorPushLast t.Vector12 <RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'>
+            <Inc s.BracketLevel>
+          )
+          Open  <Inc s.BracketLevel>;
         (t.Vector11 t.Vector12 s.BracketLevel) (']' s.Row s.Col), <VectorLength t.Vector12>:0 =
           (
-	    <VectorPushLast t.Vector11 <RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'>
-	    t.Vector12
-	    s.BracketLevel
-	  ); 
+            <VectorPushLast t.Vector11 <RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'>
+            t.Vector12
+            s.BracketLevel
+          )
+          /* empty */; 
 	(t.Vector11 t.Vector12 s.BracketLevel) (']' s.Row s.Col) =
           (
-	    t.Vector11
-	    <VectorPopLast t.Vector12>
-	    <Dec s.BracketLevel>
-	  )
-	  Close  s.BracketLevel;   
+            t.Vector11
+            <VectorPopLast t.Vector12>
+            <Dec s.BracketLevel>
+          )
+          Close  s.BracketLevel;   
         (t.Vector11 t.Vector12 s.BracketLevel) ('>' e._) = 
-          (t.Vector11 t.Vector12 s.BracketLevel) Next; 
+          (t.Vector11 t.Vector12 s.BracketLevel)
+          Next; 
         (t.Vector11 t.Vector12 s.BracketLevel) ('<' e._) =
-          (t.Vector11 t.Vector12 s.BracketLevel) Prev; 
+          (t.Vector11 t.Vector12 s.BracketLevel)
+          Prev; 
         (t.Vector11 t.Vector12 s.BracketLevel) ('+' e._) =
-          (t.Vector11 t.Vector12 s.BracketLevel) Inc; 
+          (t.Vector11 t.Vector12 s.BracketLevel)
+          Inc; 
         (t.Vector11 t.Vector12 s.BracketLevel) ('-' e._) =
-          (t.Vector11 t.Vector12 s.BracketLevel) Dec;
+          (t.Vector11 t.Vector12 s.BracketLevel)
+          Dec;
         (t.Vector11 t.Vector12 s.BracketLevel) ('.' e._) =
-          (t.Vector11 t.Vector12 s.BracketLevel) Print;
+          (t.Vector11 t.Vector12 s.BracketLevel)
+          Print;
         (t.Vector11 t.Vector12 s.BracketLevel) (',' e._) =
-          (t.Vector11 t.Vector12 s.BracketLevel) Read;
+          (t.Vector11 t.Vector12 s.BracketLevel)
+          Read;
         (t.Vector11 t.Vector12 s.BracketLevel) (s._ e._) =
-          (t.Vector11 t.Vector12 s.BracketLevel) /* empty */
+          (t.Vector11 t.Vector12 s.BracketLevel)
+          /* empty */
         } 
       (<VectorNew> <VectorNew> 0) e.Symbols
     >:
     {
-      (t.Vector11 t.Vector12 s._) e.Parsing_Tree, <VectorLength t.Vector11>:0, <VectorLength t.Vector12>:0 = e.Parsing_Tree;
-      (t.Vector11 t.Vector12 s._) e._ = Fails <VectorGetAll t.Vector11> <VectorGetAll t.Vector12>
+      (t.Vector11 t.Vector12 s._) e.Parsing_Tree,
+      <VectorLength t.Vector11>:0, <VectorLength t.Vector12>:0 =
+        e.Parsing_Tree;
+      (t.Vector11 t.Vector12 s._) e._ =
+        Fails <VectorGetAll t.Vector11> <VectorGetAll t.Vector12>
     }
 }
 	
