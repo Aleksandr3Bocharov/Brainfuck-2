@@ -37,7 +37,7 @@ https://github.com/bmstu-iu9/refal-5-lambda
 */
 
 *$FROM LibraryEx
-$EXTERN Fetch, Pipe, Map, Reduce, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec;
+$EXTERN Fetch, Pipe, Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec;
 
 *$FROM stdio
 $EXTERN Putchar, Getchar, RU;
@@ -188,62 +188,49 @@ e.ErrorMessage ::= s.CHAR+
 
 */
 Parser {
-  e.Symbols, <BracketsCheck e.Symbols>: Fails e.Errors = Fails e.Errors;
   e.Symbols =
-    <DelAccumulator
-      <MapAccum 
-        {
-          s.BracketLevel (s.Char e.RowCol), s.Char:'[' =
-            <Inc s.BracketLevel> Open  <Inc s.BracketLevel>;
-          s.BracketLevel (s.Char e.RowCol), s.Char:']' =
-            <Dec s.BracketLevel> Close  s.BracketLevel; 
-          s.BracketLevel (s.Char e.RowCol), s.Char:'>' = 
-            s.BracketLevel Next; 
-          s.BracketLevel (s.Char e.RowCol), s.Char:'<' =
-            s.BracketLevel Prev; 
-          s.BracketLevel (s.Char e.RowCol), s.Char:'+' =
-            s.BracketLevel Inc; 
-          s.BracketLevel (s.Char e.RowCol), s.Char:'-' =
-            s.BracketLevel Dec;
-          s.BracketLevel (s.Char e.RowCol), s.Char:'.' =
-            s.BracketLevel Print;
-          s.BracketLevel (s.Char e.RowCol), s.Char:',' =
-            s.BracketLevel Read;
-          s.BracketLevel (s.Char e.RowCol) =
-            s.BracketLevel /* empty */
-        } 
-        0 e.Symbols
-      >
-    >
-}
-
-/*
-
-<BracketsCheck e.Symbols> == Success | Fails e.Errors
-
-e.Symbols ::= (s.Char s.Row s.Col)* 
-s.Char ::= s.CHAR
-s.Row, s.Col  ::= s.NUMBER
-e.Errors ::= (e.ErrorMessage)+
-e.ErrorMessage ::= s.CHAR+
-
-*/
-BracketsCheck {
-  e.Symbols =
-    <Reduce
+    <MapAccum 
       {
-        (t.Vector11 t.Vector12) ('[' s.Row s.Col) =
-          (t.Vector11 <VectorPushLast t.Vector12 <RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'>);
-        (t.Vector11 t.Vector12) (']' s.Row s.Col), <VectorLength t.Vector12>:0 =
-          (<VectorPushLast t.Vector11 <RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'> t.Vector12);
-        (t.Vector11 t.Vector12) (']' s.Row s.Col) = (t.Vector11 <VectorPopLast t.Vector12>);        
-        (t.Vector11 t.Vector12) (e.CharRowCol) = (t.Vector11 t.Vector12)
-      }
-      (<VectorNew> <VectorNew>) e.Symbols
+        (t.Vector11 t.Vector12 s.BracketLevel) ('[' s.Row s.Col) =
+          (
+	    t.Vector11
+	    <VectorPushLast t.Vector12 <RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'>
+	    <Inc s.BracketLevel>
+	  )
+	  Open  <Inc s.BracketLevel>;
+        (t.Vector11 t.Vector12 s.BracketLevel) (']' s.Row s.Col), <VectorLength t.Vector12>:0 =
+          (
+	    <VectorPushLast t.Vector11 <RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'>
+	    t.Vector12
+	    s.BracketLevel
+	  ); 
+	(t.Vector11 t.Vector12 s.BracketLevel) (']' s.Row s.Col) =
+          (
+	    t.Vector11
+	    <VectorPopLast t.Vector12>
+	    <Dec s.BracketLevel>
+	  )
+	  Close  s.BracketLevel;   
+        (t.Vector11 t.Vector12 s.BracketLevel) ('>' e._) = 
+          (t.Vector11 t.Vector12 s.BracketLevel) Next; 
+        (t.Vector11 t.Vector12 s.BracketLevel) ('<' e._) =
+          (t.Vector11 t.Vector12 s.BracketLevel) Prev; 
+        (t.Vector11 t.Vector12 s.BracketLevel) ('+' e._) =
+          (t.Vector11 t.Vector12 s.BracketLevel) Inc; 
+        (t.Vector11 t.Vector12 s.BracketLevel) ('-' e._) =
+          (t.Vector11 t.Vector12 s.BracketLevel) Dec;
+        (t.Vector11 t.Vector12 s.BracketLevel) ('.' e._) =
+          (t.Vector11 t.Vector12 s.BracketLevel) Print;
+        (t.Vector11 t.Vector12 s.BracketLevel) (',' e._) =
+          (t.Vector11 t.Vector12 s.BracketLevel) Read;
+        (t.Vector11 t.Vector12 s.BracketLevel) (s._ e._) =
+          (t.Vector11 t.Vector12 s.BracketLevel) /* empty */
+        } 
+      (<VectorNew> <VectorNew> 0) e.Symbols
     >:
     {
-      (t.Vector11 t.Vector12), <VectorLength t.Vector11>:0, <VectorLength t.Vector12>:0 = Success;
-      (t.Vector11 t.Vector12) = Fails <VectorGetAll t.Vector11> <VectorGetAll t.Vector12>
+      (t.Vector11 t.Vector12 s._) e.Parsing_Tree, <VectorLength t.Vector11>:0, <VectorLength t.Vector12>:0 = e.Parsing_Tree;
+      (t.Vector11 t.Vector12 s._) e._ = Fails <VectorGetAll t.Vector11> <VectorGetAll t.Vector12>
     }
 }
 	
