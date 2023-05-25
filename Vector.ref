@@ -49,7 +49,8 @@ $ENTRY VectorInit {
 
 
 DoVectorInit {
-  s.Length s.Length e._ = /* empty */;
+  s.Length s.Length e._ =
+    /* empty */;
   s.Index s.Length e.Fill =
     (s.Index e.Fill) <DoVectorInit <Inc s.Index> s.Length e.Fill>
 }
@@ -62,7 +63,8 @@ t.Vector ::= [Vector e.Vector]
 
 */
 $ENTRY VectorGetAll {
-  [Vector e.Vector]  = <Map {(s.Ind e.Val) = (e.Val)} e.Vector>    
+  [Vector e.Vector]  =
+    <Map {(s.Ind e.Val) = (e.Val)} e.Vector>    
 }
 
 /*
@@ -177,7 +179,8 @@ e.Value ::= e.ANY-EXPR
 
 */
 $ENTRY VectorGet {
-  [Vector e.Vector-B (s.Index e.Value) e.Vector-E] s.Index = e.Value
+  [Vector e.Vector-B (s.Index e.Value) e.Vector-E] s.Index =
+    e.Value
 }
 
 /*
@@ -189,7 +192,8 @@ e.Value ::= e.ANY-EXPR
 
 */
 $ENTRY VectorGetFirst {
-  [Vector (0 e.Value) e.Vector-E] = e.Value
+  [Vector (0 e.Value) e.Vector-E] =
+    e.Value
 }
 
 /*
@@ -201,7 +205,8 @@ e.Value ::= e.ANY-EXPR
 
 */
 $ENTRY VectorGetLast {
-  [Vector e.Vector-B (s.Index e.Value)] = e.Value
+  [Vector e.Vector-B (s.Index e.Value)] =
+    e.Value
 }
 
 /*
@@ -213,6 +218,8 @@ s.Length ::= s.NUMBER
 
 */
 $ENTRY VectorLength {
-  [Vector /* empty */] = 0;
-  [Vector e.Vector-B (s.Index e._)] = <Inc s.Index>
+  [Vector /* empty */] =
+    0;
+  [Vector e.Vector-B (s.Index e._)] =
+    <Inc s.Index>
 }
