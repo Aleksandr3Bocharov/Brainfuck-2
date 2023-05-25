@@ -273,9 +273,9 @@ $ENTRY Go {
         ExistFile
         {
           True =
-	          e.bfFileName;
+            e.bfFileName;
           False =
-	          <Prout <RU 'FATAL_ERROR (1): Файл '> e.bfFileName <RU ' не существует.'>>
+            <Prout <RU 'FATAL_ERROR (1): Файл '> e.bfFileName <RU ' не существует.'>>
             <Exit 1>
         }
         /* Загрузка строк файла в e.Lines ::= (e.Line)*;  e.Line ::= s.CHAR* */
