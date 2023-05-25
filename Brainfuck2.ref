@@ -78,7 +78,8 @@ t.Vector ::= ADT.Vector
 
 */
 Interpretator {
-  e.Parsing_Tree = <DoInterpretator e.Parsing_Tree 0 <VectorNew (0)>>
+  e.Parsing_Tree =
+    <DoInterpretator e.Parsing_Tree 0 <VectorNew (0)>>
 }
 
 /*
@@ -93,7 +94,8 @@ t.Vector, t.NewVector ::= ADT.Vector
 
 */
 DoInterpretator {
-  /* empty */ s.CurrentCell t.Vector = s.CurrentCell t.Vector;
+  /* empty */ s.CurrentCell t.Vector =
+    s.CurrentCell t.Vector;
   Next e.Rest_Parsing_Tree s.CurrentCell t.Vector,
   <Compare <Inc s.CurrentCell> <VectorLength t.Vector>>:'0' = 
     <DoInterpretator e.Rest_Parsing_Tree <Inc s.CurrentCell> <VectorPushLast t.Vector 0>>;
@@ -145,14 +147,15 @@ CompiletoC {
       '{\n'
       '     int i = 0;\n'
       '     unsigned char arr[30000];\n'
-  	  '     memset(arr, 0, sizeof(arr));\n'
+      '     memset(arr, 0, sizeof(arr));\n'
       <DoCompiletoC ('     ') e.Parsing_Tree>
       '}'
-	)	
+    )	
 }
 
 DoCompiletoC {
-  (e.Spaces) /* empty */ = /* empty */;
+  (e.Spaces) /* empty */ =
+    /* empty */;
   (e.Spaces) Next e.Rest_Parsing_Tree =
     e.Spaces 'i++;\n' <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>;
   (e.Spaces) Prev e.Rest_Parsing_Tree =
@@ -198,7 +201,8 @@ Parser {
             <Inc s.BracketLevel>
           )
           Open  <Inc s.BracketLevel>;
-        (t.Vector11 t.Vector12 s.BracketLevel) (']' s.Row s.Col), <VectorLength t.Vector12>:0 =
+        (t.Vector11 t.Vector12 s.BracketLevel) (']' s.Row s.Col),
+        <VectorLength t.Vector12>:0 =
           (
             <VectorPushLast t.Vector11 <RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'>
             t.Vector12
@@ -234,7 +238,8 @@ Parser {
           (t.Vector11 t.Vector12 s.BracketLevel)
           /* empty */
         } 
-      (<VectorNew> <VectorNew> 0) e.Symbols
+      (<VectorNew> <VectorNew> 0)
+      e.Symbols
     >:
     {
       (t.Vector11 t.Vector12 s._) e.Parsing_Tree,
@@ -251,9 +256,12 @@ $ENTRY Go {
     <Arg 1>: 
     /* По умолчанию имя файла - 'brainfuck.bf'. Можно в конце имени файла не добавлять расширение .bf */				
     { 
-      /* empty */ = 'brainfuck.bf';
-      e.FileName '.bf' = e.FileName '.bf';
-      e.FileName = e.FileName '.bf'
+      /* empty */ =
+        'brainfuck.bf';
+      e.FileName '.bf' =
+        e.FileName '.bf';
+      e.FileName =
+        e.FileName '.bf'
     }:
     e.bfFileName =
     <Help>
@@ -264,8 +272,11 @@ $ENTRY Go {
         /* Если файл не существует, то выход из программы. */
         ExistFile
         {
-          True = e.bfFileName;
-          False = <Prout <RU 'FATAL_ERROR (1): Файл '> e.bfFileName <RU ' не существует.'>> <Exit 1>
+          True =
+	    e.bfFileName;
+          False =
+	    <Prout <RU 'FATAL_ERROR (1): Файл '> e.bfFileName <RU ' не существует.'>>
+            <Exit 1>
         }
         /* Загрузка строк файла в e.Lines ::= (e.Line)*;  e.Line ::= s.CHAR* */
         LoadFile
