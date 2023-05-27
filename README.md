@@ -1,5 +1,5 @@
 # Brainfuck 2
-Программа "Brainfuck 2" написана на языке программирования Рефал-5-Лямбда.
+Программа "Brainfuck 2" написана на языке программирования Рефал-5λ.
 https://github.com/bmstu-iu9/refal-5-lambda
 
 Программа "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла 'filename.bf'
