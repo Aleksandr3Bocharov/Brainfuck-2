@@ -2,6 +2,10 @@
 Программа "Brainfuck 2" написана на языке программирования Рефал-5λ.
 https://github.com/bmstu-iu9/refal-5-lambda
 
+Для компиляции программы нужны модули "stdio.ref и "Vector.ref" из
+Библиотеки модулей для языка программирования Рефал-5λ.
+https://github.com/Aleksandr3Bocharov/Libs-for-Refal-5-Lambda
+
 Программа "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла 'filename.bf'
 и компилирует его в код на языке C в файл назначения 'filename.bf.c'.
 
