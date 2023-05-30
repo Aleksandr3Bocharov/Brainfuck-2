@@ -1,7 +1,7 @@
 * Copyright 2023 Aleksandr Bocharov
 * Distributed under the Boost Software License, Version 1.0.
 * See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
-* 2023-05-25
+* 2023-05-30
 
 /* 
 
@@ -86,7 +86,7 @@ Interpretator {
 
 /*
 
-<DoInterpretator e.Parsing_Tree s.CurrentCell t.Vector> == s.NewCurrentCell t.NewVector
+<DoInterpretator e.Parsing_Tree> ==
 
 e.Parsing_Tree ::= e.Token*
 e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
