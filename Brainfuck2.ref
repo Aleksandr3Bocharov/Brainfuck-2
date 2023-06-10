@@ -81,11 +81,11 @@ s.BracketLevel ::= s.NUMBER
 */
 Interpretator {
   e.Parsing_Tree =
-    <Br CurrentCell '=' 0>
-    <CVector Cells ("{" (0) "}")>
+    <CVector Cells ('{'(0)'}')>
+    <Br CurrentCell '=' <CVector Cells Begin>>
     <DoInterpretator e.Parsing_Tree>
     <Dg CurrentCell>
-    <CVector Cells "~">
+    <CVector Cells '~'>
     <Dg Cells>
 }
 
@@ -100,43 +100,57 @@ s.BracketLevel ::= s.NUMBER
 */
 DoInterpretator {
   /* empty */ = /* empty */;
-  Next e.Rest_Parsing_Tree,
-  <Compare <Inc <Cp CurrentCell>> <CVector Cells Size>>:'0' = 
-    <Rp CurrentCell '=' <Inc <Cp CurrentCell>>>
-    <CVector Cells Push_Back "(" 0 ")">
-    <DoInterpretator e.Rest_Parsing_Tree>;
-  Next e.Rest_Parsing_Tree = 
-    <Rp CurrentCell '=' <Inc <Cp CurrentCell>>>
-    <DoInterpretator e.Rest_Parsing_Tree>;
-  Prev e.Rest_Parsing_Tree,
-  <Cp CurrentCell>:0 = 
-    <CVector Cells Insert 0 "(" 0 ")">
-    <DoInterpretator e.Rest_Parsing_Tree>;
+  Next e.Rest_Parsing_Tree =
+    <CVector Cells Iterator '++'<Cp CurrentCell>>:
+    {
+      s.NextCurrentCell,
+      <Compare s.NextCurrentCell <CVector Cells End>>: '0' = 
+       <Rp CurrentCell '=' <CVector Cells Insert  s.NextCurrentCell '('0')'>>
+       <DoInterpretator e.Rest_Parsing_Tree>;
+      s.NextCurrentCell =  
+        <Rp CurrentCell '=' s.NextCurrentCell>
+        <DoInterpretator e.Rest_Parsing_Tree>
+    };    
   Prev e.Rest_Parsing_Tree =
-    <Rp CurrentCell '=' <Dec <Cp CurrentCell>>>
-    <DoInterpretator e.Rest_Parsing_Tree>;
-  Inc e.Rest_Parsing_Tree,
-  <CVector Cells "[" <Cp CurrentCell> "]">:255 =
-    <CVector Cells "[" <Cp CurrentCell> "]" "(" 0 ")">
-    <DoInterpretator e.Rest_Parsing_Tree>; 
+    <Cp CurrentCell>:
+    {
+      0 = 
+        <Rp CurrentCell '=' <CVector Cells Insert 0 '('0')'>>
+        <DoInterpretator e.Rest_Parsing_Tree>;
+      s.CurrentCell =
+        <Rp CurrentCell '=' <CVector Cells Iterator '--'s.CurrentCell>>
+        <DoInterpretator e.Rest_Parsing_Tree>
+    };    
   Inc e.Rest_Parsing_Tree =
-    <CVector Cells  "[" <Cp CurrentCell> "]" "(" <Inc <CVector Cells  "[" <Cp CurrentCell> "]">> ")">
-    <DoInterpretator e.Rest_Parsing_Tree>; 							
-  Dec e.Rest_Parsing_Tree,
-  <CVector Cells  "[" <Cp CurrentCell> "]">:0 =
-    <CVector Cells  "[" <Cp CurrentCell> "]" "(" 255 ")">
-    <DoInterpretator e.Rest_Parsing_Tree>; 
+    <Cp CurrentCell>: s.CurrentCell =
+    <CVector Cells Iterator '*'s.CurrentCell>:
+    {
+      255 =
+        <CVector Cells Iterator '*'s.CurrentCell '=('0')'>
+        <DoInterpretator e.Rest_Parsing_Tree>; 
+      s.CurrentCellValue =
+        <CVector Cells  Iterator '*'s.CurrentCell '=('<Inc s.CurrentCellValue>')'>
+        <DoInterpretator e.Rest_Parsing_Tree>
+    };     							
   Dec e.Rest_Parsing_Tree =
-    <CVector Cells  "[" <Cp CurrentCell> "]" "(" <Dec <CVector Cells  "[" <Cp CurrentCell> "]">> ")">
-    <DoInterpretator e.Rest_Parsing_Tree>; 
+    <Cp CurrentCell>: s.CurrentCell =
+    <CVector Cells Iterator '*'s.CurrentCell>:
+    {
+      0 =
+        <CVector Cells Iterator '*'s.CurrentCell '=('255')'>
+        <DoInterpretator e.Rest_Parsing_Tree>; 
+      s.CurrentCellValue =
+        <CVector Cells  Iterator '*'s.CurrentCell '=('<Dec s.CurrentCellValue>')'>
+        <DoInterpretator e.Rest_Parsing_Tree>
+    };  
   Print e.Rest_Parsing_Tree =
-    <Putchar <Chr <CVector Cells  "[" <Cp CurrentCell> "]">>> 
+    <Putchar <Chr <CVector Cells  Iterator '*'<Cp CurrentCell>>>> 
     <DoInterpretator e.Rest_Parsing_Tree>;												
   Read e.Rest_Parsing_Tree =
-    <CVector Cells  "[" <Cp CurrentCell> "]" "(" <Ord <Getchar>> ")">
+    <CVector Cells  Iterator '*'<Cp CurrentCell> '=('<Ord <Getchar>>')'>
     <DoInterpretator e.Rest_Parsing_Tree>;						
   Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parsing_Tree,
-  <CVector Cells  "[" <Cp CurrentCell> "]">:0 =
+  <CVector Cells  Iterator '*'<Cp CurrentCell>>: 0 =
     <DoInterpretator e.Rest_Parsing_Tree>;
   Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parsing_Tree =
     <DoInterpretator e.OpenClose>
@@ -213,12 +227,12 @@ Parser {
       {
         s.BracketLevel ('[' s.Row s.Col) =
           <Inc s.BracketLevel>
-          <CVector Vector12 Push_Back "(" <RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' на строке: '> s.Row <RU ', столбце: '> s.Col '.' ")">
+          <CVector Vector12 Push_Back '('<RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'')'>
           Open  <Inc s.BracketLevel>;
         s.BracketLevel (']' s.Row s.Col),
-        <CVector Vector12 Size>:0 =
+        <CVector Vector12 Size>: 0 =
           s.BracketLevel
-          <CVector Vector11 Push_Back "(" <RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' на строке: '> s.Row <RU ', столбце: '> s.Col '.' ")">
+          <CVector Vector11 Push_Back '('<RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' на строке: '> s.Row <RU ', столбце: '> s.Col '.'')'>
           /* empty */; 
         s.BracketLevel (']' s.Row s.Col) =
           <Dec s.BracketLevel>
@@ -251,14 +265,16 @@ Parser {
     >:
     {
       s._ e.Parsing_Tree,
-      <CVector Vector11 Size>:0, <CVector Vector12 Size>:0 =
+      <CVector Vector11 Size>: 0, <CVector Vector12 Size>: 0 =
         e.Parsing_Tree;
       s._ e._ =
-        Fails <CVector Vector11 "&"> <CVector Vector12 "&">
+        Fails
+        <CVector Vector11 List <CVector Vector11 Begin> <CVector Vector11 End>>
+        <CVector Vector12 List <CVector Vector12 Begin> <CVector Vector12 End>>
     }: e.ParserResult = 
       e.ParserResult
-      <CVector Vector11 "~">
-      <CVector Vector12 "~">
+      <CVector Vector11 '~'>
+      <CVector Vector12 '~'>
       <Dg Vector11>
       <Dg Vector12>
 }
