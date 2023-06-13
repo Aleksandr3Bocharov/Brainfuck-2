@@ -11,7 +11,7 @@ Brainfuck 2
 Программа "Brainfuck 2" написана на языке программирования Рефал-5λ.
 https://github.com/bmstu-iu9/refal-5-lambda
 
-Для компиляции программы нужны библиотеки "stdio" и "Vector" из
+Для компиляции программы нужны библиотеки "stdio", "String" и "Vector" из
 Собрания библиотек Boost языка программирования Рефал-5λ.
 https://github.com/Aleksandr3Bocharov/Boost-Refal-5-Lambda-Libraries
 
@@ -45,7 +45,10 @@ https://github.com/Aleksandr3Bocharov/Boost-Refal-5-Lambda-Libraries
 $EXTERN Fetch, Pipe, Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec;
 
 *$FROM stdio
-$EXTERN Putchar, Getchar, RU;
+$EXTERN Putchar, Getchar;
+
+*$FROM String
+$EXTERN RU;
 
 *$FROM Vector
 $EXTERN CVector;

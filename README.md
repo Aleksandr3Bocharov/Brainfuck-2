@@ -2,7 +2,7 @@
 Программа "Brainfuck 2" написана на языке программирования Рефал-5λ.
 https://github.com/bmstu-iu9/refal-5-lambda
 
-Для компиляции программы нужны библиотеки "stdio" и "Vector" из
+Для компиляции программы нужны библиотеки "stdio", "String" и "Vector" из
 Собрания библиотек Boost языка программирования Рефал-5λ.
 https://github.com/Aleksandr3Bocharov/Boost-Refal-5-Lambda-Libraries
 
