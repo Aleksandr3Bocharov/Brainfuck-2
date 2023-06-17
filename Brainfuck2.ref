@@ -1,7 +1,7 @@
 * Copyright 2023 Aleksandr Bocharov
 * Distributed under the Boost Software License, Version 1.0.
 * See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
-* 2023-06-14
+* 2023-06-16
 * https://github.com/Aleksandr3Bocharov/Brainfuck-2
 
 /* 
@@ -85,8 +85,11 @@ s.BracketLevel ::= s.NUMBER
 Interpretator {
   e.Parsing_Tree =
     <CVector Cells (1 '('0')')>
-    <Br CurrentCell '=' <CVector Cells Begin>>
+    <Br Begin '=' <CVector Cells Begin>>
+    <Br CurrentCell '=' <Cp Begin>>
     <DoInterpretator e.Parsing_Tree>
+    <Rp Begin '=' >
+    <Dg Begin>
     <Rp CurrentCell '=' >
     <Dg CurrentCell>
     <CVector Cells '~'>
@@ -118,8 +121,8 @@ DoInterpretator {
     <Cp CurrentCell>:
     {
       s.CurrentCell,
-      <CVector Cells Iterator s.CurrentCell '==' <CVector Cells Begin>>: True = 
-        <Rp CurrentCell '=' <CVector Cells Insert <CVector Cells Begin> '('0')'>>
+      <CVector Cells Iterator s.CurrentCell '==' <Cp Begin>>: True = 
+        <Rp CurrentCell '=' <CVector Cells Insert <Cp Begin> '('0')'>>
         <DoInterpretator e.Rest_Parsing_Tree>;
       s.CurrentCell =
         <Rp CurrentCell '=' <CVector Cells Iterator '--'s.CurrentCell>>
