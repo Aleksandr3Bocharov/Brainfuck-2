@@ -43,40 +43,39 @@ $EXTERN Fetch, Pipe, Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec
 %%
 #include <stdio.h>
 #include <conio.h>
+#include <deque>
 %%
+
+/*
+  cells - лента ячеек типа двухсвязный список deque
+  cell -  текущая ячейка типа итератор двухсвязного списка deque
+*/
+%%
+static std::deque<unsigned char> cells ({0});
+static std::deque<unsigned char>::iterator cell = cells.begin();
+%%
+
 
 /* 
 
-<Putchar e.Char> == * empty *
-
-e.Char ::= s.CHAR? | s.CHAR e.ANY-EXPR
+<NextCell> =
 
 */
-Putchar {
+NextCell {
 %%
   refalrts::Iter content_b = 0;
   refalrts::Iter content_e = 0;
   refalrts::call_left(content_b, content_e, arg_begin, arg_end);
-
-  int putchar_res = 0;
-  refalrts::Iter p = content_b, end = content_e;
   
-  if (! refalrts::empty_seq(p, end)) 
-  {
-    switch(p->tag) 
-	  {
-      case refalrts::cDataChar:
-        putchar_res = printf("%c", p->char_info);
-		    break;
-
-      default:
-	      return refalrts::cRecognitionImpossible;
-    }
-  }
-
-  if (putchar_res < 0) 
-  {
+  if (! refalrts::empty_seq(content_b, content_e)) 
     return refalrts::cRecognitionImpossible;
+  
+  ++cell;
+
+  if (cell == cells.end())
+  {
+    cells.push_back(0);
+    cell = --cells.end();
   }
 
   refalrts::splice_to_freelist(vm, arg_begin, arg_end);
@@ -84,36 +83,117 @@ Putchar {
 %%
 }
 
-/*
+/* 
 
-<Getchar> == s.Char
-
-s.Char ::= s.CHAR
+<PrevCell> =
 
 */
-Getchar {
+PrevCell {
 %%
   refalrts::Iter content_b = 0;
   refalrts::Iter content_e = 0;
   refalrts::call_left(content_b, content_e, arg_begin, arg_end);
-	
+  
   if (! refalrts::empty_seq(content_b, content_e)) 
-  {
     return refalrts::cRecognitionImpossible;
+  
+  if (cell == cells.begin())
+  {
+    cells.push_front(0);
+    cell = cells.begin();
   }
-	
-  refalrts::reset_allocator(vm);
-  refalrts::Iter dummy = 0;
+  else
+    --cell;
 
-  int cur_char;
-  cur_char = getche();
-  refalrts::alloc_char(vm, dummy, static_cast<char>(cur_char));
-
-  refalrts::splice_from_freelist(vm, arg_begin);
   refalrts::splice_to_freelist(vm, arg_begin, arg_end);
   return refalrts::cSuccess;
 %%
 }
+
+/* 
+
+<IncCell> =
+
+*/
+IncCell {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+    
+  if (! refalrts::empty_seq(content_b, content_e)) 
+    return refalrts::cRecognitionImpossible;
+    
+  ++*cell;
+
+  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+
+/* 
+
+<DecCell> =
+
+*/
+DecCell {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+    
+  if (! refalrts::empty_seq(content_b, content_e)) 
+    return refalrts::cRecognitionImpossible;
+    
+  --*cell;
+
+  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+/* 
+
+<PrintCell> =
+
+*/
+PrintCell {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+    
+  if (! refalrts::empty_seq(content_b, content_e)) 
+    return refalrts::cRecognitionImpossible;
+    
+  putchar(*cell);
+
+  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+/* 
+
+<ReadtoCell> =
+
+*/
+ReadtoCell {
+  %%
+    refalrts::Iter content_b = 0;
+    refalrts::Iter content_e = 0;
+    refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+      
+    if (! refalrts::empty_seq(content_b, content_e)) 
+      return refalrts::cRecognitionImpossible;
+      
+    *cell = getche();
+  
+    refalrts::splice_to_freelist(vm, arg_begin, arg_end);
+    return refalrts::cSuccess;
+  %%
+  }
 
 /*
 
@@ -204,36 +284,32 @@ s.Cell ::= s.NUMBER
 
 */
 DoInterpretator {
-  (e.BeforeCells) s.Cell (e.AfterCells) =
-    (e.BeforeCells) s.Cell (e.AfterCells);
-  Next e.Rest_Parsing_Tree (e.BeforeCells) s.Cell () =
-    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells s.Cell) 0 ()>;
-  Next e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (s.NextCell e.AfterCells) =
-    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells s.Cell) s.NextCell (e.AfterCells)>;    
-  Prev e.Rest_Parsing_Tree () s.Cell (e.AfterCells) =
-    <DoInterpretator e.Rest_Parsing_Tree () 0 (s.Cell e.AfterCells)>;
-  Prev e.Rest_Parsing_Tree (e.BeforeCells s.PrevCell) s.Cell (e.AfterCells) =
-    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) s.PrevCell (s.Cell e.AfterCells)>;    
-  Inc e.Rest_Parsing_Tree (e.BeforeCells) 255 (e.AfterCells) =
-    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) 0 (e.AfterCells)>;
-  Inc e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells) =
-    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) <Inc s.Cell> (e.AfterCells)>;     							
-  Dec e.Rest_Parsing_Tree (e.BeforeCells) 0 (e.AfterCells) =
-    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) 255 (e.AfterCells)>;
-  Dec e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells) =
-    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) <Dec s.Cell> (e.AfterCells)>;    
-  Print e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells) =
-    <Putchar <Chr s.Cell>> 
-    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells)>;												
-  Read e.Rest_Parsing_Tree (e.BeforeCells) s._ (e.AfterCells) =
-    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) <Ord <Getchar>> (e.AfterCells)>;						
-  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parsing_Tree
-    (e.BeforeCells) 0 (e.AfterCells) =
+  =
+    ;
+  Next e.Rest_Parsing_Tree =
+    <NextCell>
+    <DoInterpretator e.Rest_Parsing_Tree>;  
+  Prev e.Rest_Parsing_Tree =
+    <PrevCell>
+    <DoInterpretator e.Rest_Parsing_Tree>;  
+  Inc e.Rest_Parsing_Tree =
+    <IncCell>
+    <DoInterpretator e.Rest_Parsing_Tree>; 							
+  Dec e.Rest_Parsing_Tree =
+    <DecCell>
+    <DoInterpretator e.Rest_Parsing_Tree>; 
+  Print e.Rest_Parsing_Tree =
+    <PrintCell> 
+    <DoInterpretator e.Rest_Parsing_Tree>;												
+  Read e.Rest_Parsing_Tree =
+    <ReadtoCell>
+    <DoInterpretator e.Rest_Parsing_Tree>;						
+  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parsing_Tree,
+  =
       <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) 0 (e.AfterCells)>;
-  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parsing_Tree 
-    (e.BeforeCells) s.Cell (e.AfterCells) =
-    <DoInterpretator e.OpenClose (e.BeforeCells) s.Cell (e.AfterCells)>: e.Cells =
-    <DoInterpretator Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parsing_Tree e.Cells>   
+  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parsing_Tree =
+    <DoInterpretator e.OpenClose>
+    <DoInterpretator Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parsing_Tree>   
 }
 
 /*
