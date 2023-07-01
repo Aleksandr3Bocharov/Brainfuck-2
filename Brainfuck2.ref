@@ -42,6 +42,7 @@ $EXTERN Fetch, Pipe, Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec
 
 %%
 #include <stdio.h>
+#include <conio.h>
 %%
 
 /* 
@@ -85,12 +86,12 @@ Putchar {
 
 /*
 
-<Getchar> == s.Char
+<Getch> == s.Char
 
 s.Char ::= s.CHAR
 
 */
-Getchar {
+Getch {
 %%
   refalrts::Iter content_b = 0;
   refalrts::Iter content_e = 0;
@@ -105,7 +106,7 @@ Getchar {
   refalrts::Iter dummy = 0;
 
   int cur_char;
-  cur_char = getchar();
+  cur_char = getche();
   refalrts::alloc_char(vm, dummy, static_cast<char>(cur_char));
 
   refalrts::splice_from_freelist(vm, arg_begin);
@@ -225,7 +226,7 @@ DoInterpretator {
     <Putchar <Chr s.Cell>> 
     <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells)>;												
   Read e.Rest_Parsing_Tree (e.BeforeCells) s._ (e.AfterCells) =
-    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) <Ord <Getchar>> (e.AfterCells)>;						
+    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) <Ord <Getch>> (e.AfterCells)>;						
   Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parsing_Tree
     (e.BeforeCells) 0 (e.AfterCells) =
       <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) 0 (e.AfterCells)>;
