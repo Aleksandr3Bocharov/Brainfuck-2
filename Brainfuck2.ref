@@ -86,12 +86,12 @@ Putchar {
 
 /*
 
-<Getch> == s.Char
+<Getchar> == s.Char
 
 s.Char ::= s.CHAR
 
 */
-Getch {
+Getchar {
 %%
   refalrts::Iter content_b = 0;
   refalrts::Iter content_e = 0;
@@ -226,7 +226,7 @@ DoInterpretator {
     <Putchar <Chr s.Cell>> 
     <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells)>;												
   Read e.Rest_Parsing_Tree (e.BeforeCells) s._ (e.AfterCells) =
-    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) <Ord <Getch>> (e.AfterCells)>;						
+    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) <Ord <Getchar>> (e.AfterCells)>;						
   Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parsing_Tree
     (e.BeforeCells) 0 (e.AfterCells) =
       <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) 0 (e.AfterCells)>;
