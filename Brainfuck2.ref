@@ -258,67 +258,55 @@ Help {
     >
 }
 
-/*
-
-<Interpretator e.Parsing_Tree> == 
-
-e.Parsing_Tree ::= e.Token*
-e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
-s.BracketLevel ::= s.NUMBER
-
-*/
-Interpretator {
-  e.Parsing_Tree =
-    <DoInterpretator e.Parsing_Tree () 0 ()>: e._ =
-}
 
 /*
 
-<DoInterpretator e.Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells)> ==
+<Interpetator e.Parsing_Tree ==
 
-e.Parsing_Tree ::= e.Token*
-e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
-s.BracketLevel ::= s.NUMBER
-e.BeforeCells, e.AfterCells ::= s.NUMBER*
-s.Cell ::= s.NUMBER
+e.Parsing_Tree ::= t.LeafNode*
+t.LeafNode ::= s.Leaf | (t.LeafNode*)
+s.Leaf ::= Next | Prev | Inc | Dec | Print | Read
 
 */
-DoInterpretator {
+Interpetator {
   =
     ;
   Next e.Rest_Parsing_Tree =
     <NextCell>
-    <DoInterpretator e.Rest_Parsing_Tree>;  
+    <Interpetator e.Rest_Parsing_Tree>;  
   Prev e.Rest_Parsing_Tree =
     <PrevCell>
-    <DoInterpretator e.Rest_Parsing_Tree>;  
+    <Interpetator e.Rest_Parsing_Tree>;  
   Inc e.Rest_Parsing_Tree =
     <IncCell>
-    <DoInterpretator e.Rest_Parsing_Tree>; 							
+    <Interpetator e.Rest_Parsing_Tree>; 							
   Dec e.Rest_Parsing_Tree =
     <DecCell>
-    <DoInterpretator e.Rest_Parsing_Tree>; 
+    <Interpetator e.Rest_Parsing_Tree>; 
   Print e.Rest_Parsing_Tree =
     <PrintCell> 
-    <DoInterpretator e.Rest_Parsing_Tree>;												
+    <Interpetator e.Rest_Parsing_Tree>;												
   Read e.Rest_Parsing_Tree =
     <ReadtoCell>
-    <DoInterpretator e.Rest_Parsing_Tree>;						
-  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parsing_Tree,
-  =
-      <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) 0 (e.AfterCells)>;
-  Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parsing_Tree =
-    <DoInterpretator e.OpenClose>
-    <DoInterpretator Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parsing_Tree>   
+    <Interpetator e.Rest_Parsing_Tree>;						
+  (e.OpenClose) e.Rest_Parsing_Tree,
+  <CellisZero>:
+  {
+    'Y' =
+      <Interpetator e.Rest_Parsing_Tree>;
+    e._ =
+      <Interpetator e.OpenClose>
+      <Interpetator (e.OpenClose) e.Rest_Parsing_Tree>
+  }
 }
 
 /*
 
 <CompiletoC e.Parsing_Tree> == t.C_Code
 
-e.Parsing_Tree ::= e.Token*
-e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
-s.BracketLevel ::= s.NUMBER
+e.Parsing_Tree ::= t.LeafNode*
+t.LeafNode ::= s.Leaf | (t.LeafNode*)
+s.Leaf ::= Next | Prev | Inc | Dec | Print | Read
 t.C_Code ::= (s.CHAR+)
 
 */
@@ -338,8 +326,8 @@ CompiletoC {
 }
 
 DoCompiletoC {
-  (e.Spaces) /* empty */ =
-    /* empty */;
+  (e.Spaces) =
+    ;
   (e.Spaces) Next e.Rest_Parsing_Tree =
     e.Spaces 'i++;\n' <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>;
   (e.Spaces) Prev e.Rest_Parsing_Tree =
@@ -352,7 +340,7 @@ DoCompiletoC {
     e.Spaces 'putchar(arr[i]);\n' <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>;
   (e.Spaces) Read e.Rest_Parsing_Tree =
     e.Spaces 'arr[i] = getchar();\n' <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>;
-  (e.Spaces) Open s.BracketLevel e.OpenClose Close s.BracketLevel e.Rest_Parsing_Tree =
+  (e.Spaces) (e.OpenClose) e.Rest_Parsing_Tree =
     e.Spaces 'while(arr[i])\n' 
     e.Spaces '{\n' 
     <DoCompiletoC (e.Spaces '     ') e.OpenClose>
@@ -362,73 +350,93 @@ DoCompiletoC {
 
 /* 
 
-<Parser e.Symbols> == e.Parsing_Tree | Fails e.Errors
+<Parser e.Tokens> == e.Parsing_Tree
+
+e.Tokens ::= s.Token*
+s.Token ::= '>' | '<' | '+' | '-' | '.' | ',' | '(' | ')' 
+e.Parsing_Tree ::= t.LeafNode*
+t.LeafNode ::= s.Leaf | (t.LeafNode*)
+s.Leaf ::= Next | Prev | Inc | Dec | Print | Read
+
+*/
+Parser {
+  =
+    ;
+  '>' e.RestTokens =
+    Next <Parser e.RestTokens>;
+  '<' e.RestTokens =
+    Prev <Parser e.RestTokens>;
+  '+' e.RestTokens =
+    Inc <Parser e.RestTokens>;    
+  '-' e.RestTokens =
+    Dec <Parser e.RestTokens>; 
+  '.' e.RestTokens =
+    Print <Parser e.RestTokens>;
+  ',' e.RestTokens =
+    Read <Parser e.RestTokens>;
+  '(' e.RestTokens =
+    <Parser e.RestTokens>: e.LeafNode (e.NewRestTokens) =
+    (e.LeafNode) <Parser e.NewRestTokens>;
+  ')' e.RestTokens =
+    (e.RestTokens)      
+}
+
+/* 
+
+<Tokenizer e.Symbols> == e.Tokens | Fails e.Errors
 
 e.Symbols ::= (s.Char s.Row s.Col)* 
 s.Char ::= s.CHAR
 s.Row, s.Col ::= s.NUMBER
-e.Parsing_Tree ::= e.Token*
-e.Token ::= Next | Prev | Inc | Dec | Print | Read | Open s.BracketLevel | Close s.BracketLevel
-s.BracketLevel ::= s.NUMBER
+e.Tokens ::= s.Token*
+s.Token ::= '>' | '<' | '+' | '-' | '.' | ',' | '(' | ')' 
 e.Errors ::= (e.ErrorMessage)+
 e.ErrorMessage ::= s.CHAR+
 
 */
-Parser {
+Tokenizer {
   e.Symbols =
     <Br Fails11 '=' >
     <Br Fails12 '=' >
-    <MapAccum 
+    <Map 
       {
-        s.BracketLevel ('[' s.Row s.Col) =
-          <Inc s.BracketLevel>
+        ('[' s.Row s.Col) =
           <Rp Fails12 '=' <Cp Fails12> (<RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' в строке: '> s.Row <RU ' и столбце: '> s.Col '.')>
-          Open  <Inc s.BracketLevel>;
-        s.BracketLevel (']' s.Row s.Col),
+          '[';
+        (']' s.Row s.Col),
         <TermCompare (<Cp Fails12>) ()>: '=' =
-          s.BracketLevel
           <Rp Fails11 '=' <Cp Fails11> (<RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' в строке: '> s.Row <RU ' и столбце: '> s.Col '.')>
             ; 
-        s.BracketLevel (']' s.Row s.Col),
+        (']' s.Row s.Col),
         <Cp Fails12>: e.Fails12 (e._) =
-          <Dec s.BracketLevel>
           <Rp Fails12 '=' e.Fails12>
-          Close  s.BracketLevel;   
-        s.BracketLevel ('>' e._) = 
-          s.BracketLevel
-          Next; 
-        s.BracketLevel ('<' e._) =
-          s.BracketLevel
-          Prev; 
-        s.BracketLevel ('+' e._) =
-          s.BracketLevel
-          Inc; 
-        s.BracketLevel ('-' e._) =
-          s.BracketLevel
-          Dec;
-        s.BracketLevel ('.' e._) =
-          s.BracketLevel
-          Print;
-        s.BracketLevel (',' e._) =
-          s.BracketLevel
-          Read;
-        s.BracketLevel (s._ e._) =
-          s.BracketLevel
-          /* empty */
+          ']';   
+        ('>' e._) = 
+          '>'; 
+        ('<' e._) =
+          '<'; 
+        ('+' e._) =
+          '+'; 
+        ('-' e._) =
+          '-';
+        ('.' e._) =
+          '.';
+        (',' e._) =
+          ',';
+        (s._ e._) =
       } 
-      0
       e.Symbols
     >:
     {
-      s._ e.Parsing_Tree,
+      e.Tokens,
       <TermCompare (<Cp Fails11>) ()>: '=',
       <TermCompare (<Cp Fails12>) ()>: '=' =
-        e.Parsing_Tree
+        e.Tokens
         <Rp Fails11 '=' >
         <Rp Fails12 '=' >
         <Dg Fails11>
         <Dg Fails12>;
-      s._ e._ =
+      e._ =
         Fails
         <Cp Fails11>
         <Cp Fails12>
@@ -488,18 +496,20 @@ $ENTRY Go {
             1
         )
         DelAccumulator
-        /* Запуск лексического и синтаксического анализатора */
-        &Parser
+        /* Запуск лексического анализатора */
+        &Tokenizer
         {
           /* Если Fails, то завершение программы */
           Fails e.Errors =	
             <Map {(e.ErrorMessage) = <Prout e.ErrorMessage>} e.Errors> 
             <Prout <RU 'FATAL_ERROR (99): Существуют несколько синтаксических ошибок.'>>
             <Exit 99>;
-          e.Parsing_Tree = 
+          e.Tokens = 
             <Fetch
-              e.Parsing_Tree
+              e.Tokens
               <Pipe 
+                /* Запуск синтаксического анализатора */
+                &Parser
                 /* Запуск компилятора в код C */
                 &CompiletoC
                 /* Сохранение кода C в файл */
