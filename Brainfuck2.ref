@@ -1,7 +1,7 @@
 * Copyright 2023 Aleksandr Bocharov
 * Distributed under the Boost Software License, Version 1.0.
 * See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
-* 2023-07-01
+* 2023-07-02
 * https://github.com/Aleksandr3Bocharov/Brainfuck-2
 
 /* 
@@ -42,158 +42,70 @@ $EXTERN Fetch, Pipe, Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec
 
 %%
 #include <stdio.h>
-#include <conio.h>
-#include <deque>
 %%
+
+/* 
+
+<Putchar e.Char> == * empty *
+
+e.Char ::= s.CHAR? | s.CHAR e.ANY-EXPR
+
+*/
+Putchar {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+
+  int putchar_res = 0;
+  refalrts::Iter p = content_b, end = content_e;
+  
+  if (! refalrts::empty_seq(p, end)) 
+    switch(p->tag) 
+	  {
+      case refalrts::cDataChar:
+        putchar_res = printf("%c", p->char_info);
+		    break;
+
+      default:
+	      return refalrts::cRecognitionImpossible;
+    }
+
+  if (putchar_res < 0) 
+    return refalrts::cRecognitionImpossible;
+
+  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
+  return refalrts::cSuccess;
+%%
+}
 
 /*
-  cells - лента ячеек типа двухсвязный список deque
-  cell -  текущая ячейка типа итератор двухсвязного списка deque
-*/
-%%
-static std::deque<unsigned char> cells ({0});
-static std::deque<unsigned char>::iterator cell = cells.begin();
-%%
 
+<GetChar> == s.Char
 
-/* 
-
-<NextCell> =
+s.Char ::= s.CHAR
 
 */
-NextCell {
+GetChar {
 %%
   refalrts::Iter content_b = 0;
   refalrts::Iter content_e = 0;
   refalrts::call_left(content_b, content_e, arg_begin, arg_end);
-  
+	
   if (! refalrts::empty_seq(content_b, content_e)) 
     return refalrts::cRecognitionImpossible;
-  
-  ++cell;
+	
+  refalrts::reset_allocator(vm);
+  refalrts::Iter dummy = 0;
 
-  if (cell == cells.end())
-  {
-    cells.push_back(0);
-    cell = --cells.end();
-  }
+  int cur_char = getchar();
+  refalrts::alloc_char(vm, dummy, static_cast<char>(cur_char));
 
+  refalrts::splice_from_freelist(vm, arg_begin);
   refalrts::splice_to_freelist(vm, arg_begin, arg_end);
   return refalrts::cSuccess;
 %%
 }
-
-/* 
-
-<PrevCell> =
-
-*/
-PrevCell {
-%%
-  refalrts::Iter content_b = 0;
-  refalrts::Iter content_e = 0;
-  refalrts::call_left(content_b, content_e, arg_begin, arg_end);
-  
-  if (! refalrts::empty_seq(content_b, content_e)) 
-    return refalrts::cRecognitionImpossible;
-  
-  if (cell == cells.begin())
-  {
-    cells.push_front(0);
-    cell = cells.begin();
-  }
-  else
-    --cell;
-
-  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
-  return refalrts::cSuccess;
-%%
-}
-
-/* 
-
-<IncCell> =
-
-*/
-IncCell {
-%%
-  refalrts::Iter content_b = 0;
-  refalrts::Iter content_e = 0;
-  refalrts::call_left(content_b, content_e, arg_begin, arg_end);
-    
-  if (! refalrts::empty_seq(content_b, content_e)) 
-    return refalrts::cRecognitionImpossible;
-    
-  ++*cell;
-
-  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
-  return refalrts::cSuccess;
-%%
-}
-
-
-/* 
-
-<DecCell> =
-
-*/
-DecCell {
-%%
-  refalrts::Iter content_b = 0;
-  refalrts::Iter content_e = 0;
-  refalrts::call_left(content_b, content_e, arg_begin, arg_end);
-    
-  if (! refalrts::empty_seq(content_b, content_e)) 
-    return refalrts::cRecognitionImpossible;
-    
-  --*cell;
-
-  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
-  return refalrts::cSuccess;
-%%
-}
-
-/* 
-
-<PrintCell> =
-
-*/
-PrintCell {
-%%
-  refalrts::Iter content_b = 0;
-  refalrts::Iter content_e = 0;
-  refalrts::call_left(content_b, content_e, arg_begin, arg_end);
-    
-  if (! refalrts::empty_seq(content_b, content_e)) 
-    return refalrts::cRecognitionImpossible;
-    
-  putchar(*cell);
-
-  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
-  return refalrts::cSuccess;
-%%
-}
-
-/* 
-
-<ReadtoCell> =
-
-*/
-ReadtoCell {
-  %%
-    refalrts::Iter content_b = 0;
-    refalrts::Iter content_e = 0;
-    refalrts::call_left(content_b, content_e, arg_begin, arg_end);
-      
-    if (! refalrts::empty_seq(content_b, content_e)) 
-      return refalrts::cRecognitionImpossible;
-      
-    *cell = getche();
-  
-    refalrts::splice_to_freelist(vm, arg_begin, arg_end);
-    return refalrts::cSuccess;
-  %%
-  }
 
 /*
 
@@ -258,46 +170,60 @@ Help {
     >
 }
 
-
 /*
 
-<Interpetator e.Parsing_Tree ==
+<Interpretator e.Parsing_Tree> == 
 
 e.Parsing_Tree ::= t.LeafNode*
 t.LeafNode ::= s.Leaf | (t.LeafNode*)
-s.Leaf ::= Next | Prev | Inc | Dec | Print | Read
+s.Leaf ::= Next | Prev | Inc | Dec | Write | Read
 
 */
-Interpetator {
-  =
-    ;
-  Next e.Rest_Parsing_Tree =
-    <NextCell>
-    <Interpetator e.Rest_Parsing_Tree>;  
-  Prev e.Rest_Parsing_Tree =
-    <PrevCell>
-    <Interpetator e.Rest_Parsing_Tree>;  
-  Inc e.Rest_Parsing_Tree =
-    <IncCell>
-    <Interpetator e.Rest_Parsing_Tree>; 							
-  Dec e.Rest_Parsing_Tree =
-    <DecCell>
-    <Interpetator e.Rest_Parsing_Tree>; 
-  Print e.Rest_Parsing_Tree =
-    <PrintCell> 
-    <Interpetator e.Rest_Parsing_Tree>;												
-  Read e.Rest_Parsing_Tree =
-    <ReadtoCell>
-    <Interpetator e.Rest_Parsing_Tree>;						
-  (e.LeafNode) e.Rest_Parsing_Tree,
-  <CellisNotZero>:
-  {
-    'Y' =
-      <Interpetator e.LeafNode>
-      <Interpetator (e.LeafNode) e.Rest_Parsing_Tree>;
-    e._ =
-      <Interpetator e.Rest_Parsing_Tree>
-  }
+Interpretator {
+  e.Parsing_Tree =
+    <DoInterpretator e.Parsing_Tree () 0 ()>: e._ =
+}
+
+/*
+
+<DoInterpretator e.Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells)> ==
+
+e.Parsing_Tree ::= t.LeafNode*
+t.LeafNode ::= s.Leaf | (t.LeafNode*)
+s.Leaf ::= Next | Prev | Inc | Dec | Write | Read
+e.BeforeCells, e.AfterCells ::= s.NUMBER*
+s.Cell ::= s.NUMBER
+
+*/
+DoInterpretator {
+  (e.BeforeCells) s.Cell (e.AfterCells) =
+    (e.BeforeCells) s.Cell (e.AfterCells);
+  Next e.Rest_Parsing_Tree (e.BeforeCells) s.Cell () =
+    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells s.Cell) 0 ()>;
+  Next e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (s.NextCell e.AfterCells) =
+    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells s.Cell) s.NextCell (e.AfterCells)>;    
+  Prev e.Rest_Parsing_Tree () s.Cell (e.AfterCells) =
+    <DoInterpretator e.Rest_Parsing_Tree () 0 (s.Cell e.AfterCells)>;
+  Prev e.Rest_Parsing_Tree (e.BeforeCells s.PrevCell) s.Cell (e.AfterCells) =
+    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) s.PrevCell (s.Cell e.AfterCells)>;    
+  Inc e.Rest_Parsing_Tree (e.BeforeCells) 255 (e.AfterCells) =
+    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) 0 (e.AfterCells)>;
+  Inc e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells) =
+    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) <Inc s.Cell> (e.AfterCells)>;     							
+  Dec e.Rest_Parsing_Tree (e.BeforeCells) 0 (e.AfterCells) =
+    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) 255 (e.AfterCells)>;
+  Dec e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells) =
+    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) <Dec s.Cell> (e.AfterCells)>;    
+  Write e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells) =
+    <Putchar <Chr s.Cell>> 
+    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells)>;												
+  Read e.Rest_Parsing_Tree (e.BeforeCells) s._ (e.AfterCells) =
+    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) <Ord <GetChar>> (e.AfterCells)>;						
+  (e.LeafNode) e.Rest_Parsing_Tree (e.BeforeCells) 0 (e.AfterCells) =
+    <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) 0 (e.AfterCells)>;
+  (e.LeafNode) e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells) =
+    <DoInterpretator e.LeafNode (e.BeforeCells) s.Cell (e.AfterCells)>: e.Cells =
+    <DoInterpretator (e.LeafNode) e.Rest_Parsing_Tree e.Cells>   
 }
 
 /*
@@ -306,7 +232,7 @@ Interpetator {
 
 e.Parsing_Tree ::= t.LeafNode*
 t.LeafNode ::= s.Leaf | (t.LeafNode*)
-s.Leaf ::= Next | Prev | Inc | Dec | Print | Read
+s.Leaf ::= Next | Prev | Inc | Dec | Write | Read
 t.C_Code ::= (s.CHAR+)
 
 */
@@ -321,6 +247,7 @@ CompiletoC {
       '     unsigned char arr[30000];\n'
       '     memset(arr, 0, sizeof(arr));\n'
       <DoCompiletoC ('     ') e.Parsing_Tree>
+      '     return 0;\n'
       '}'
     )	
 }
@@ -336,7 +263,7 @@ DoCompiletoC {
     e.Spaces 'arr[i]++;\n' <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>;
   (e.Spaces) Dec e.Rest_Parsing_Tree =
     e.Spaces 'arr[i]--;\n' <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>;
-  (e.Spaces) Print e.Rest_Parsing_Tree =
+  (e.Spaces) Write e.Rest_Parsing_Tree =
     e.Spaces 'putchar(arr[i]);\n' <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>;
   (e.Spaces) Read e.Rest_Parsing_Tree =
     e.Spaces 'arr[i] = getchar();\n' <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>;
@@ -356,7 +283,7 @@ e.Tokens ::= s.Token*
 s.Token ::= '>' | '<' | '+' | '-' | '.' | ',' | '[' | ']' 
 e.Parsing_Tree ::= t.LeafNode*
 t.LeafNode ::= s.Leaf | (t.LeafNode*)
-s.Leaf ::= Next | Prev | Inc | Dec | Print | Read
+s.Leaf ::= Next | Prev | Inc | Dec | Write | Read
 
 */
 Parser {
@@ -371,7 +298,7 @@ Parser {
   '-' e.RestTokens =
     Dec <Parser e.RestTokens>; 
   '.' e.RestTokens =
-    Print <Parser e.RestTokens>;
+    Write <Parser e.RestTokens>;
   ',' e.RestTokens =
     Read <Parser e.RestTokens>;
   '[' e.RestTokens =
@@ -504,12 +431,12 @@ $ENTRY Go {
             <Map {(e.ErrorMessage) = <Prout e.ErrorMessage>} e.Errors> 
             <Prout <RU 'FATAL_ERROR (99): Существуют несколько синтаксических ошибок.'>>
             <Exit 99>;
-          e.Tokens = 
+          e.Tokens =
+            /* Запуск синтаксического анализатора */
+            <Parser e.Tokens>: e.Parsing_Tree = 
             <Fetch
-              e.Tokens
+              e.Parsing_Tree
               <Pipe 
-                /* Запуск синтаксического анализатора */
-                &Parser
                 /* Запуск компилятора в код C */
                 &CompiletoC
                 /* Сохранение кода C в файл */
