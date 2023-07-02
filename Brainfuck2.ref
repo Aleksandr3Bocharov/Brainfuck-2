@@ -290,13 +290,13 @@ Interpetator {
     <ReadtoCell>
     <Interpetator e.Rest_Parsing_Tree>;						
   (e.LeafNode) e.Rest_Parsing_Tree,
-  <CellisZero>:
+  <CellisNotZero>:
   {
     'Y' =
-      <Interpetator e.Rest_Parsing_Tree>;
-    e._ =
       <Interpetator e.LeafNode>
-      <Interpetator (e.LeafNode) e.Rest_Parsing_Tree>
+      <Interpetator (e.LeafNode) e.Rest_Parsing_Tree>;
+    e._ =
+      <Interpetator e.Rest_Parsing_Tree>
   }
 }
 
