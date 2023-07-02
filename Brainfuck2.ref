@@ -289,14 +289,14 @@ Interpetator {
   Read e.Rest_Parsing_Tree =
     <ReadtoCell>
     <Interpetator e.Rest_Parsing_Tree>;						
-  (e.OpenClose) e.Rest_Parsing_Tree,
+  (e.LeafNode) e.Rest_Parsing_Tree,
   <CellisZero>:
   {
     'Y' =
       <Interpetator e.Rest_Parsing_Tree>;
     e._ =
-      <Interpetator e.OpenClose>
-      <Interpetator (e.OpenClose) e.Rest_Parsing_Tree>
+      <Interpetator e.LeafNode>
+      <Interpetator (e.LeafNode) e.Rest_Parsing_Tree>
   }
 }
 
@@ -340,10 +340,10 @@ DoCompiletoC {
     e.Spaces 'putchar(arr[i]);\n' <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>;
   (e.Spaces) Read e.Rest_Parsing_Tree =
     e.Spaces 'arr[i] = getchar();\n' <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>;
-  (e.Spaces) (e.OpenClose) e.Rest_Parsing_Tree =
+  (e.Spaces) (e.LeafNode) e.Rest_Parsing_Tree =
     e.Spaces 'while(arr[i])\n' 
     e.Spaces '{\n' 
-    <DoCompiletoC (e.Spaces '     ') e.OpenClose>
+    <DoCompiletoC (e.Spaces '     ') e.LeafNode>
     e.Spaces '}\n' 
     <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>
 }
@@ -353,7 +353,7 @@ DoCompiletoC {
 <Parser e.Tokens> == e.Parsing_Tree
 
 e.Tokens ::= s.Token*
-s.Token ::= '>' | '<' | '+' | '-' | '.' | ',' | '(' | ')' 
+s.Token ::= '>' | '<' | '+' | '-' | '.' | ',' | '[' | ']' 
 e.Parsing_Tree ::= t.LeafNode*
 t.LeafNode ::= s.Leaf | (t.LeafNode*)
 s.Leaf ::= Next | Prev | Inc | Dec | Print | Read
@@ -374,10 +374,10 @@ Parser {
     Print <Parser e.RestTokens>;
   ',' e.RestTokens =
     Read <Parser e.RestTokens>;
-  '(' e.RestTokens =
+  '[' e.RestTokens =
     <Parser e.RestTokens>: e.LeafNode (e.NewRestTokens) =
     (e.LeafNode) <Parser e.NewRestTokens>;
-  ')' e.RestTokens =
+  ']' e.RestTokens =
     (e.RestTokens)      
 }
 
@@ -389,7 +389,7 @@ e.Symbols ::= (s.Char s.Row s.Col)*
 s.Char ::= s.CHAR
 s.Row, s.Col ::= s.NUMBER
 e.Tokens ::= s.Token*
-s.Token ::= '>' | '<' | '+' | '-' | '.' | ',' | '(' | ')' 
+s.Token ::= '>' | '<' | '+' | '-' | '.' | ',' | '[' | ']' 
 e.Errors ::= (e.ErrorMessage)+
 e.ErrorMessage ::= s.CHAR+
 
