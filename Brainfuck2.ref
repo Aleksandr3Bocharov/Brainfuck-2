@@ -37,8 +37,7 @@ https://github.com/Mazdaywik/Refal-05
 
 */
 
-*$FROM LibraryEx
-$EXTERN Fetch, Pipe, Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec, TermCompare;
+$EXTERN Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec;
 
 %%
 #include <stdio.h>
@@ -115,41 +114,44 @@ e.String ::= s.CHAR*
 
 */
 RU {
-    /* empty */ = /* empty */;
-    'Ё' e.RestChars =
-      <Chr 240> <RU e.RestChars>;
-    'ё' e.RestChars =
-      <Chr 241> <RU e.RestChars>;
-    s.Char1 s.Char2 e.RestChars,
-    <isRU s.Char1 s.Char2>:208 =
-      <Chr <Sub <Ord s.Char2> 16>> <RU e.RestChars>;
-    s.Char1 s.Char2 e.RestChars,
-    <isRU s.Char1 s.Char2>:209 =
-      <Chr <Add <Ord s.Char2> 96>> <RU e.RestChars>;
-    s.Char e.RestChars =
-      s.Char <RU e.RestChars>;
-  }
+  =
+    ;
+  'Ё' e.RestChars =
+    <Chr 240> <RU e.RestChars>;
+  'ё' e.RestChars =
+    <Chr 241> <RU e.RestChars>;
+  s.Char1 s.Char2 e.RestChars,
+  <isRU s.Char1 s.Char2>:208 =
+    <Chr <Sub <Ord s.Char2> 16>> <RU e.RestChars>;
+  s.Char1 s.Char2 e.RestChars,
+  <isRU s.Char1 s.Char2>:209 =
+    <Chr <Add <Ord s.Char2> 96>> <RU e.RestChars>;
+  s.Char e.RestChars =
+    s.Char <RU e.RestChars>;
+}
   
-  /*
+/*
   
-  <isRU e.Char> == s.isRU
+<isRU e.Char> == s.isRU
   
-  e.Char ::= s.CHAR s.CHAR
-  s.isRU ::= 208 | 209 | False
+e.Char ::= s.CHAR s.CHAR
+s.isRU ::= 208 | 209 | False
   
-  */
-  isRU {
-    e.Char,
-    <Compare (<Ord e.Char>) 208 143>: '+',
-    <Compare (<Ord e.Char>) 208 192>: '-' =
-      208;
-    e.Char,
-    <Compare (<Ord e.Char>) 209 127>: '+',
-    <Compare (<Ord e.Char>) 209 144>: '-' =
-      209;
-    e.Char =
-      False
-  }
+*/
+isRU {
+  e.Char,
+  <Ord e.Char>: 208 s.OrdChar2,
+  <Compare s.OrdChar2 143>: '+',
+  <Compare s.OrdChar2 192>: '-' =
+    208;
+  e.Char,
+  <Ord e.Char>: 209 s.OrdChar2,
+  <Compare s.OrdChar2 127>: '+',
+  <Compare s.OrdChar2 144>: '-' =
+    209;
+  e.Char =
+    False
+}
 
 * Вывод справки
 Help {
@@ -322,131 +324,121 @@ e.ErrorMessage ::= s.CHAR+
 
 */
 Tokenizer {
-  e.Symbols =
-    <Br Fails11 '=' >
-    <Br Fails12 '=' >
-    <Map 
-      {
-        ('[' s.Row s.Col) =
-          <Rp Fails12 '=' <Cp Fails12> (<RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' в строке: '> s.Row <RU ' и столбце: '> s.Col '.')>
-          '[';
-        (']' s.Row s.Col),
-        <TermCompare (<Cp Fails12>) ()>: '=' =
-          <Rp Fails11 '=' <Cp Fails11> (<RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' в строке: '> s.Row <RU ' и столбце: '> s.Col '.')>
-            ; 
-        (']' s.Row s.Col),
-        <Cp Fails12>: e.Fails12 (e._) =
-          <Rp Fails12 '=' e.Fails12>
-          ']';   
-        ('>' e._) = 
-          '>'; 
-        ('<' e._) =
-          '<'; 
-        ('+' e._) =
-          '+'; 
-        ('-' e._) =
-          '-';
-        ('.' e._) =
-          '.';
-        (',' e._) =
-          ',';
-        (s._ e._) =
-      } 
-      e.Symbols
-    >:
-    {
-      e.Tokens,
-      <TermCompare (<Cp Fails11>) ()>: '=',
-      <TermCompare (<Cp Fails12>) ()>: '=' =
-        e.Tokens
-        <Rp Fails11 '=' >
-        <Rp Fails12 '=' >
-        <Dg Fails11>
-        <Dg Fails12>;
-      e._ =
-        Fails
-        <Cp Fails11>
-        <Cp Fails12>
-        <Rp Fails11 '=' >
-        <Rp Fails12 '=' >
-        <Dg Fails11>
-        <Dg Fails12>
-    }
+  e.Symbols,
+  <Br Fails11 '=' >
+  <Br Fails12 '=' >
+  <Map DoMapTokenizer e.Symbols>:
+  {
+    e.Tokens,
+    <TermCompare (<Cp Fails11>) ()>: '=',
+    <TermCompare (<Cp Fails12>) ()>: '=' =
+      e.Tokens
+      <Rp Fails11 '=' >
+      <Rp Fails12 '=' >
+      <Dg Fails11>
+      <Dg Fails12>;
+    e.Tokens =
+      Fails
+      <Cp Fails11>
+      <Cp Fails12>
+      <Rp Fails11 '=' >
+      <Rp Fails12 '=' >
+      <Dg Fails11>
+      <Dg Fails12>
+  }
+}
+
+DoMapTokenizer {
+  ('[' s.Row s.Col) =
+    <Rp Fails12 '=' <Cp Fails12> (<RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' в строке: '> s.Row <RU ' и столбце: '> s.Col '.')>
+    '[';
+  (']' s.Row s.Col),
+  <TermCompare (<Cp Fails12>) ()>: '=' =
+    <Rp Fails11 '=' <Cp Fails11> (<RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' в строке: '> s.Row <RU ' и столбце: '> s.Col '.')>
+      ; 
+  (']' s.Row s.Col),
+  <Cp Fails12>: e.Fails12 (e._) =
+    <Rp Fails12 '=' e.Fails12>
+    ']';   
+  ('>' s.Row s.Col) = 
+    '>'; 
+  ('<' s.Row s.Col) =
+    '<'; 
+  ('+' s.Row s.Col) =
+    '+'; 
+  ('-' s.Row s.Col) =
+    '-';
+  ('.' s.Row s.Col) =
+    '.';
+  (',' s.Row s.Col) =
+    ',';
+  (s.Char s.Row s.Col) =
 }
 	
+DoMapPrintErrors {
+  (e.ErrorMessage) =
+    <Prout e.ErrorMessage>
+}
+
+DoMapPrint {
+  s.Row (e.Line) =
+    <Inc s.Row> 
+    <Prout s.Row ' ' e.Line>
+    <DelAccumulator <MapAccum DoMapPrint-Aux 1 e.Line>>	
+}
+
+DoMapPrint-Aux {
+  s.Col s.Char =
+    <Inc s.Col>
+    (s.Char s.Row s.Col)
+}
+
 $ENTRY Go {
-  =
-    /* Аргумент программы - имя файла, где находится код Brainfuck.*/
-    <Arg 1>: 
-    /* По умолчанию имя файла - 'brainfuck.bf'. Можно в конце имени файла не добавлять расширение .bf */				
-    { 
-      /* empty */ =
-        'brainfuck.bf';
-      e.FileName '.bf' =
-        e.FileName '.bf';
-      e.FileName =
-        e.FileName '.bf'
-    }:
-    e.bfFileName =
-    <Help>
-    <Prout <RU 'Код на языке Brainfuck из исходного файла '> e.bfFileName ':\n'>
-    <Fetch
-      e.bfFileName			
-      <Pipe 
-        /* Если файл не существует, то выход из программы. */
-        ExistFile
-        {
-          True =
-            e.bfFileName;
-          False =
-            <Prout <RU 'FATAL_ERROR (1): Файл '> e.bfFileName <RU ' не существует.'>>
-            <Exit 1>
-        }
-        /* Загрузка строк файла в e.Lines ::= (e.Line)*;  e.Line ::= s.CHAR* */
-        LoadFile
-        /* Вывод строк файла на консоль и преобразование строк e.Lines => e.Symbols
-        e.Symbols ::= (s.Char s.Row s.Col)*; s.Char ::= s.CHAR; s.Row ::= s.NUMBER; s.Col  ::= s.NUMBER */
-        (
-          MapAccum 
-            {
-              s.Row (e.Line) =
-                <Inc s.Row> 
-                <Prout s.Row ' ' e.Line>
-                <Fetch
-                  e.Line
-                  <Pipe
-                    (MapAccum {s.Col s.Char = <Inc s.Col> (s.Char s.Row s.Col)} 1)
-                    DelAccumulator
-                  >
-                >	
-            }
-            1
-        )
-        DelAccumulator
-        /* Запуск лексического анализатора */
-        &Tokenizer
-        {
-          /* Если Fails, то завершение программы */
-          Fails e.Errors =	
-            <Map {(e.ErrorMessage) = <Prout e.ErrorMessage>} e.Errors> 
-            <Prout <RU 'FATAL_ERROR (99): Существуют несколько синтаксических ошибок.'>>
-            <Exit 99>;
-          e.Tokens =
-            /* Запуск синтаксического анализатора */
-            <Parser e.Tokens>: e.Parsing_Tree = 
-            <Fetch
-              e.Parsing_Tree
-              <Pipe 
-                /* Запуск компилятора в код C */
-                &CompiletoC
-                /* Сохранение кода C в файл */
-                (SaveFile (e.bfFileName '.c'))
-                /* Запуск интерпретатора */
-                Prout
-                (&Interpretator e.Parsing_Tree)
-              >
-            >
-        }
-      >
-    >
+  ,
+  /* Аргумент программы - имя файла, где находится код Brainfuck.*/
+  <Arg 1>: 
+  /* По умолчанию имя файла - 'brainfuck.bf'. Можно в конце имени файла не добавлять расширение .bf */				
+  { 
+    /* empty */ =
+      'brainfuck.bf';
+    e.FileName '.bf' =
+      e.FileName '.bf';
+    e.FileName =
+      e.FileName '.bf'
+  }:
+  e.bfFileName,
+  <Help>
+  <Prout <RU 'Код на языке Brainfuck из исходного файла '> e.bfFileName ':\n'>
+  /* Если файл не существует, то выход из программы. */
+  <ExistFile e.bfFileName>:
+  {
+    False =
+      <Prout <RU 'FATAL_ERROR (1): Файл '> e.bfFileName <RU ' не существует.'>>
+      <Exit 1>;
+    True =
+  },
+  /* Загрузка строк файла в e.Lines ::= (e.Line)*;  e.Line ::= s.CHAR* */
+  <LoadFile e.bfFileName>: e.Lines,
+  /* Вывод строк файла на консоль и преобразование строк e.Lines => e.Symbols
+  e.Symbols ::= (s.Char s.Row s.Col)*; s.Char ::= s.CHAR; s.Row ::= s.NUMBER; s.Col  ::= s.NUMBER */
+  <DelAccumulator <MapAccum DoMapPrint 1 e.Lines>>: e.Symbols,
+  /* Запуск лексического анализатора */
+  <Tokenizer e.Symbols>:
+  {
+    /* Если Fails, то завершение программы */
+    Fails e.Errors =	
+      <Map DoMapPrintErrors e.Errors> 
+      <Prout <RU 'FATAL_ERROR (99): Существуют несколько синтаксических ошибок.'>>
+      <Exit 99>;
+    e.Tokens = 
+  },
+  /* Запуск синтаксического анализатора */
+  <Parser e.Tokens>: e.Parsing_Tree =
+    /* Запуск компилятора в код C */
+    <CompiletoC e.Parsing_Tree>
+    /* Сохранение кода C в файл */
+    <SaveFile e.bfFileName '.c'>
+    /* Запуск интерпретатора */
+    <Prout>
+    <Interpretator e.Parsing_Tree>
 }
