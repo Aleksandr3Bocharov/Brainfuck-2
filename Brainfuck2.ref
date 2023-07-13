@@ -188,11 +188,12 @@ Interpretator {
 
 /*
 
-<DoInterpretator e.Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells)> ==
+<DoInterpretator e.Parsing_Tree e.Cells> ==
 
 e.Parsing_Tree ::= t.LeafNode*
 t.LeafNode ::= s.Leaf | (t.LeafNode*)
 s.Leaf ::= Next | Prev | Inc | Dec | Write | Read
+e.Cells ::= (e.BeforeCells) s.Cell (e.AfterCells)
 e.BeforeCells, e.AfterCells ::= s.NUMBER*
 s.Cell ::= s.NUMBER
 
