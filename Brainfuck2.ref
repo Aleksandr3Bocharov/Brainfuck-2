@@ -182,8 +182,8 @@ s.Leaf ::= Next | Prev | Inc | Dec | Write | Read
 
 */
 Interpretator {
-  e.Parsing_Tree =
-    <DoInterpretator e.Parsing_Tree () 0 ()>: e._ =
+  e.Parsing_Tree,
+  <DoInterpretator e.Parsing_Tree () 0 ()>: e.Cells =
 }
 
 /*
@@ -220,12 +220,12 @@ DoInterpretator {
   Write e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells) =
     <Putchar <Chr s.Cell>> 
     <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells)>;												
-  Read e.Rest_Parsing_Tree (e.BeforeCells) s._ (e.AfterCells) =
+  Read e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells) =
     <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) <Ord <GetChar>> (e.AfterCells)>;						
   (e.LeafNode) e.Rest_Parsing_Tree (e.BeforeCells) 0 (e.AfterCells) =
     <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) 0 (e.AfterCells)>;
-  (e.LeafNode) e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells) =
-    <DoInterpretator e.LeafNode (e.BeforeCells) s.Cell (e.AfterCells)>: e.Cells =
+  (e.LeafNode) e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells),
+  <DoInterpretator e.LeafNode (e.BeforeCells) s.Cell (e.AfterCells)>: e.Cells =
     <DoInterpretator (e.LeafNode) e.Rest_Parsing_Tree e.Cells>   
 }
 
@@ -304,8 +304,8 @@ Parser {
     Write <Parser e.RestTokens>;
   ',' e.RestTokens =
     Read <Parser e.RestTokens>;
-  '[' e.RestTokens =
-    <Parser e.RestTokens>: e.LeafNode (e.NewRestTokens) =
+  '[' e.RestTokens,
+  <Parser e.RestTokens>: e.LeafNode (e.NewRestTokens) =
     (e.LeafNode) <Parser e.NewRestTokens>;
   ']' e.RestTokens =
     (e.RestTokens)      
@@ -331,8 +331,8 @@ Tokenizer {
   <Map DoMapTokenizer e.Symbols>:
   {
     e.Tokens,
-    <TermCompare (<Cp Fails11>) ()>: '=',
-    <TermCompare (<Cp Fails12>) ()>: '=' =
+    <Cp Fails11>: ,
+    <Cp Fails12>: =
       e.Tokens
       <Rp Fails11 '=' >
       <Rp Fails12 '=' >
@@ -354,11 +354,11 @@ DoMapTokenizer {
     <Rp Fails12 '=' <Cp Fails12> (<RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' в строке: '> s.Row <RU ' и столбце: '> s.Col '.')>
     '[';
   (']' s.Row s.Col),
-  <TermCompare (<Cp Fails12>) ()>: '=' =
+  <Cp Fails12>: =
     <Rp Fails11 '=' <Cp Fails11> (<RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' в строке: '> s.Row <RU ' и столбце: '> s.Col '.')>
       ; 
   (']' s.Row s.Col),
-  <Cp Fails12>: e.Fails12 (e._) =
+  <Cp Fails12>: e.Fails12 (e.Fail12) =
     <Rp Fails12 '=' e.Fails12>
     ']';   
   ('>' s.Row s.Col) = 
@@ -385,39 +385,56 @@ DoMapPrint {
   s.Row (e.Line) =
     <Inc s.Row> 
     <Prout s.Row ' ' e.Line>
-    <DelAccumulator <MapAccum DoMapPrint-Aux 1 e.Line>>	
+    <DelAccumulator <MapAccum DoMapPrint-Aux (s.Row 1) e.Line>>	
 }
 
 DoMapPrint-Aux {
-  s.Col s.Char =
-    <Inc s.Col>
+  (s.Row s.Col) s.Char =
+    (s.Row <Inc s.Col>)
     (s.Char s.Row s.Col)
+}
+
+/*
+
+<GetFileName e.Arg> == e.bfFileName
+
+e.Arg ::= s.CHAR*
+e.bfFileName ::= 'brainfuck.bf' | s.CHAR+ '.bf'
+
+*/
+GetFileName {
+  =
+    'brainfuck.bf';
+  e.FileName '.bf' =
+    e.FileName '.bf';
+  e.FileName =
+    e.FileName '.bf'
+}
+
+/*
+
+<bfFileExist s.ExistFile e.bfFileName> ==
+
+s.ExistFile ::= True | False
+e.bfFileName ::= 'brainfuck.bf' | s.CHAR+ '.bf'
+
+*/
+bfFileExist {
+  False e.bfFileName =
+    <Prout <RU 'FATAL_ERROR (1): Файл '> e.bfFileName <RU ' не существует.'>>
+    <Exit 1>;
+  True e.bfFileName =
 }
 
 $ENTRY Go {
   ,
   /* Аргумент программы - имя файла, где находится код Brainfuck.*/
-  <Arg 1>: 
   /* По умолчанию имя файла - 'brainfuck.bf'. Можно в конце имени файла не добавлять расширение .bf */				
-  { 
-    /* empty */ =
-      'brainfuck.bf';
-    e.FileName '.bf' =
-      e.FileName '.bf';
-    e.FileName =
-      e.FileName '.bf'
-  }:
-  e.bfFileName,
+  <GetFileName <Arg 1>>: e.bfFileName,
   <Help>
   <Prout <RU 'Код на языке Brainfuck из исходного файла '> e.bfFileName ':\n'>
   /* Если файл не существует, то выход из программы. */
-  <ExistFile e.bfFileName>:
-  {
-    False =
-      <Prout <RU 'FATAL_ERROR (1): Файл '> e.bfFileName <RU ' не существует.'>>
-      <Exit 1>;
-    True =
-  },
+  <bfFileExist <ExistFile e.bfFileName> e.bfFileName>: ,
   /* Загрузка строк файла в e.Lines ::= (e.Line)*;  e.Line ::= s.CHAR* */
   <LoadFile e.bfFileName>: e.Lines,
   /* Вывод строк файла на консоль и преобразование строк e.Lines => e.Symbols
@@ -431,15 +448,15 @@ $ENTRY Go {
       <Map DoMapPrintErrors e.Errors> 
       <Prout <RU 'FATAL_ERROR (99): Существуют несколько синтаксических ошибок.'>>
       <Exit 99>;
-    e.Tokens = 
-  },
-  /* Запуск синтаксического анализатора */
-  <Parser e.Tokens>: e.Parsing_Tree =
-    /* Запуск компилятора в код C */
-    <CompiletoC e.Parsing_Tree>
-    /* Сохранение кода C в файл */
-    <SaveFile e.bfFileName '.c'>
-    /* Запуск интерпретатора */
-    <Prout>
-    <Interpretator e.Parsing_Tree>
+    e.Tokens,
+    /* Запуск синтаксического анализатора */
+    <Parser e.Tokens>: e.Parsing_Tree =
+      /* Запуск компилятора в код C */
+      <CompiletoC e.Parsing_Tree>
+      /* Сохранение кода C в файл */
+      <SaveFile e.bfFileName '.c'>
+      /* Запуск интерпретатора */
+      <Prout>
+      <Interpretator e.Parsing_Tree>
+  }
 }
