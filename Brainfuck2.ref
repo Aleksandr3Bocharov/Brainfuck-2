@@ -37,74 +37,11 @@ https://github.com/Mazdaywik/Refal-05
 
 */
 
+*$FROM LibraryEx
 $EXTERN Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec;
 
-%%
-#include <stdio.h>
-%%
-
-/* 
-
-<Putchar e.Char> == * empty *
-
-e.Char ::= s.CHAR? | s.CHAR e.ANY-EXPR
-
-*/
-Putchar {
-%%
-  refalrts::Iter content_b = 0;
-  refalrts::Iter content_e = 0;
-  refalrts::call_left(content_b, content_e, arg_begin, arg_end);
-
-  int putchar_res = 0;
-  refalrts::Iter p = content_b, end = content_e;
-  
-  if (! refalrts::empty_seq(p, end)) 
-    switch(p->tag) 
-	  {
-      case refalrts::cDataChar:
-        putchar_res = printf("%c", p->char_info);
-		    break;
-
-      default:
-	      return refalrts::cRecognitionImpossible;
-    }
-
-  if (putchar_res < 0) 
-    return refalrts::cRecognitionImpossible;
-
-  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
-  return refalrts::cSuccess;
-%%
-}
-
-/*
-
-<GetChar> == s.Char
-
-s.Char ::= s.CHAR
-
-*/
-GetChar {
-%%
-  refalrts::Iter content_b = 0;
-  refalrts::Iter content_e = 0;
-  refalrts::call_left(content_b, content_e, arg_begin, arg_end);
-	
-  if (! refalrts::empty_seq(content_b, content_e)) 
-    return refalrts::cRecognitionImpossible;
-	
-  refalrts::reset_allocator(vm);
-  refalrts::Iter dummy = 0;
-
-  int cur_char = getchar();
-  refalrts::alloc_char(vm, dummy, static_cast<char>(cur_char));
-
-  refalrts::splice_from_freelist(vm, arg_begin);
-  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
-  return refalrts::cSuccess;
-%%
-}
+*$FROM stdio
+$EXTERN PutChar, GetChar;
 
 /*
 
@@ -186,18 +123,6 @@ Interpretator {
   <DoInterpretator e.Parsing_Tree () 0 ()>: e.Cells =
 }
 
-/*
-
-<DoInterpretator e.Parsing_Tree e.Cells> ==
-
-e.Parsing_Tree ::= t.LeafNode*
-t.LeafNode ::= s.Leaf | (t.LeafNode*)
-s.Leaf ::= Next | Prev | Inc | Dec | Write | Read
-e.Cells ::= (e.BeforeCells) s.Cell (e.AfterCells)
-e.BeforeCells, e.AfterCells ::= s.NUMBER*
-s.Cell ::= s.NUMBER
-
-*/
 DoInterpretator {
   (e.BeforeCells) s.Cell (e.AfterCells) =
     (e.BeforeCells) s.Cell (e.AfterCells);
@@ -218,7 +143,7 @@ DoInterpretator {
   Dec e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells) =
     <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) <Dec s.Cell> (e.AfterCells)>;    
   Write e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells) =
-    <Putchar <Chr s.Cell>> 
+    <PutChar <Chr s.Cell>> 
     <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells)>;												
   Read e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells) =
     <DoInterpretator e.Rest_Parsing_Tree (e.BeforeCells) <Ord <GetChar>> (e.AfterCells)>;						
@@ -451,10 +376,8 @@ $ENTRY Go {
     e.Tokens,
     /* Запуск синтаксического анализатора */
     <Parser e.Tokens>: e.Parsing_Tree =
-      /* Запуск компилятора в код C */
-      <CompiletoC e.Parsing_Tree>
-      /* Сохранение кода C в файл */
-      <SaveFile e.bfFileName '.c'>
+      /* Запуск компилятора в код C и сохранение кода C в файл */
+      <SaveFile (e.bfFileName '.c') <CompiletoC e.Parsing_Tree>>
       /* Запуск интерпретатора */
       <Prout>
       <Interpretator e.Parsing_Tree>
