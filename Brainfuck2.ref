@@ -1,7 +1,7 @@
 * Copyright 2023 Aleksandr Bocharov
 * Distributed under the Boost Software License, Version 1.0.
 * See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
-* 2023-07-14
+* 2023-07-17
 * https://github.com/Aleksandr3Bocharov/Brainfuck-2
 
 /* 
@@ -11,101 +11,28 @@ Brainfuck 2
 Программа "Brainfuck 2" написана на языке программирования Рефал-05.
 https://github.com/Mazdaywik/Refal-05
 
-Программа "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла 'filename.bf'
-и компилирует его в код на языке C в файл назначения 'filename.bf.c'.
+Программа "Brainfuck 2" использует библиотеку GTK3.
+https://docs.gtk.org/gtk3/
 
-
-ИСПОЛЬЗОВАНИЕ:
-    brainfuck2 [filename[.bf]]
-
-
-где
-    filename        Имя исходного файла и файла назначения.
-
-
-Имя по умолчанию исходного файла 'brainfuck.bf'
-и файла назначения 'brainfuck.bf.c'.
-
-
-Если исходный файл 'filename.bf' не существует,
-то происходит FATAL_ERROR(1) и программа завершает работу.
-
-
-Файл назначения 'filename.bf.c' будет перезаписан, если он существует.
-
-
+Программа "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла
+и компилирует его в код на языке C в файл назначения.
 
 */
 
 *$FROM LibraryEx
 $EXTERN Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec;
 
+*$FROM Platform
+$EXTERN Platform;
+
 *$FROM stdio
-$EXTERN PutChar, GetChar;
-
-/*
-
-<RU e.String> == e.String
-
-e.String ::= s.CHAR*
-
-*/
-RU {
-  =
-    ;
-  'Ё' e.RestChars =
-    <Chr 240> <RU e.RestChars>;
-  'ё' e.RestChars =
-    <Chr 241> <RU e.RestChars>;
-  s.Char1 s.Char2 e.RestChars,
-  <isRU s.Char1 s.Char2>:208 =
-    <Chr <Sub <Ord s.Char2> 16>> <RU e.RestChars>;
-  s.Char1 s.Char2 e.RestChars,
-  <isRU s.Char1 s.Char2>:209 =
-    <Chr <Add <Ord s.Char2> 96>> <RU e.RestChars>;
-  s.Char e.RestChars =
-    s.Char <RU e.RestChars>;
-}
-  
-/*
-  
-<isRU e.Char> == s.isRU
-  
-e.Char ::= s.CHAR s.CHAR
-s.isRU ::= 208 | 209 | False
-  
-*/
-isRU {
-  e.Char,
-  <Ord e.Char>: 208 s.OrdChar2,
-  <Compare s.OrdChar2 143>: '+',
-  <Compare s.OrdChar2 192>: '-' =
-    208;
-  e.Char,
-  <Ord e.Char>: 209 s.OrdChar2,
-  <Compare s.OrdChar2 127>: '+',
-  <Compare s.OrdChar2 144>: '-' =
-    209;
-  e.Char =
-    False
-}
+$EXTERN PutChar, GetChar, OpenFileDialog;
 
 * Вывод справки
 Help {
   = <Prout
-      <RU
-        '\nПрограмма "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла \'filename.bf\'\n'
-        'и компилирует его в код на языке C в файл назначения \'filename.bf.c\'.\n\n\n'
-        'ИСПОЛЬЗОВАНИЕ:\n'
-        '    brainfuck2 [filename[.bf]]\n\n\n'
-        'где\n'
-        '    filename        Имя исходного файла и файла назначения.\n\n\n'
-        'Имя по умолчанию исходного файла \'brainfuck.bf\'\n'
-        'и файла назначения \'brainfuck.bf.c\'.\n\n\n'
-        'Если исходный файл \'filename.bf\' не существует,\n'
-        'то происходит FATAL_ERROR(1) и программа завершает работу.\n\n\n'
-        'Файл назначения \'filename.bf.c\' будет перезаписан, если он существует.\n\n\n'
-      >
+      '\nПрограмма "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла\n'
+      'и компилирует его в код на языке C в файл назначения.\n\n\n'
     >
 }
 
@@ -276,11 +203,11 @@ Tokenizer {
 
 DoMapTokenizer {
   ('[' s.Row s.Col) =
-    <Rp Fails12 '=' <Cp Fails12> (<RU 'SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' в строке: '> s.Row <RU ' и столбце: '> s.Col '.')>
+    <Rp Fails12 '=' <Cp Fails12> ('SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' в строке: ' s.Row ' и столбце: ' s.Col '.')>
     '[';
   (']' s.Row s.Col),
   <Cp Fails12>: =
-    <Rp Fails11 '=' <Cp Fails11> (<RU 'SYNTAX_ERROR(11): Непредвиденный символ \']\' в строке: '> s.Row <RU ' и столбце: '> s.Col '.')>
+    <Rp Fails11 '=' <Cp Fails11> ('SYNTAX_ERROR(11): Непредвиденный символ \']\' в строке: ' s.Row ' и столбце: ' s.Col '.')>
       ; 
   (']' s.Row s.Col),
   <Cp Fails12>: e.Fails12 (e.Fail12) =
@@ -321,45 +248,41 @@ DoMapPrint-Aux {
 
 /*
 
-<GetFileName e.Arg> == e.bfFileName
+<bfFileName e.bfFileName> == e.bfFileName
 
-e.Arg ::= s.CHAR*
-e.bfFileName ::= 'brainfuck.bf' | s.CHAR+ '.bf'
+e.bfFileName ::= s.CHAR*
 
 */
-GetFileName {
+bfFileName {
   =
-    'brainfuck.bf';
-  e.FileName '.bf' =
-    e.FileName '.bf';
-  e.FileName =
-    e.FileName '.bf'
+    <Prout 'FATAL_ERROR (1): Файл с кодом на языке Brainfuck не выбран.'>
+    <Exit 1>;
+  e.bfFileName =
+    e.bfFileName
 }
+
 
 /*
 
-<bfFileExist s.ExistFile e.bfFileName> ==
+<CHCP s.Platform> == 
 
-s.ExistFile ::= True | False
-e.bfFileName ::= 'brainfuck.bf' | s.CHAR+ '.bf'
+s.Platform ::= Windows | POSIX
 
 */
-bfFileExist {
-  False e.bfFileName =
-    <Prout <RU 'FATAL_ERROR (1): Файл '> e.bfFileName <RU ' не существует.'>>
-    <Exit 1>;
-  True e.bfFileName =
+CHCP {
+  Windows,
+  <System 'chcp 65001'>: e.RetCode =
+    ;
+  POSIX =
 }
 
 $ENTRY Go {
   ,
-  /* Аргумент программы - имя файла, где находится код Brainfuck.*/
-  /* По умолчанию имя файла - 'brainfuck.bf'. Можно в конце имени файла не добавлять расширение .bf */				
-  <GetFileName <Arg 1>>: e.bfFileName,
+  <CHCP <Platform>>
   <Help>
-  <Prout <RU 'Код на языке Brainfuck из исходного файла '> e.bfFileName ':\n'>
-  /* Если файл не существует, то выход из программы. */
-  <bfFileExist <ExistFile e.bfFileName> e.bfFileName>: ,
+  <Prout 'Открытие файла с кодом на языке Brainfuck.'>
+  <bfFileName <OpenFileDialog>>: e.bfFileName,
+  <Prout 'Код на языке Brainfuck из исходного файла ' e.bfFileName ':\n'>
   /* Загрузка строк файла в e.Lines ::= (e.Line)*;  e.Line ::= s.CHAR* */
   <LoadFile e.bfFileName>: e.Lines,
   /* Вывод строк файла на консоль и преобразование строк e.Lines => e.Symbols
@@ -371,7 +294,7 @@ $ENTRY Go {
     /* Если Fails, то завершение программы */
     Fails e.Errors =	
       <Map DoMapPrintErrors e.Errors> 
-      <Prout <RU 'FATAL_ERROR (99): Существуют несколько синтаксических ошибок.'>>
+      <Prout 'FATAL_ERROR (99): Существуют несколько синтаксических ошибок.'>
       <Exit 99>;
     e.Tokens,
     /* Запуск синтаксического анализатора */

@@ -11,6 +11,7 @@ https://github.com/Mazdaywik/Refal-05
 
 */
 
+#include <gtk\gtk.h>
 #include <stdio.h>
 #include "refal05rts.h"
 
@@ -75,6 +76,54 @@ R05_DEFINE_ENTRY_FUNCTION(GetChar, "GetChar") {
   {
     r05_alloc_char((char) cur_char);
   }
+
+  r05_splice_from_freelist(arg_begin);
+  r05_splice_to_freelist(arg_begin, arg_end);
+}
+
+/*
+
+<OpenFileDialog> == e.bfFileName
+
+e.bfFileName ::= s.CHAR*
+
+*/
+R05_DEFINE_ENTRY_FUNCTION(OpenFileDialog, "OpenFileDialog") {
+  struct r05_node *callee = arg_begin->next;
+
+  if (callee->next != arg_end)
+  {
+    r05_recognition_impossible();
+  }
+
+  r05_reset_allocator();
+
+  gtk_init(0, NULL);
+
+  GtkWidget *dialog;
+  GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
+  gint res;
+
+  dialog = gtk_file_chooser_dialog_new("Открыть файл",
+                                      NULL,
+                                      action,
+                                      ("Отмена"),
+                                      GTK_RESPONSE_CANCEL,
+                                      ("Открыть"),
+                                      GTK_RESPONSE_ACCEPT,
+                                      NULL);
+
+  res = gtk_dialog_run(GTK_DIALOG(dialog));
+  if (res == GTK_RESPONSE_ACCEPT)
+  {
+    char *filename;
+    GtkFileChooser *chooser = GTK_FILE_CHOOSER(dialog);
+    filename = gtk_file_chooser_get_filename(chooser); 
+    r05_alloc_string(filename);
+    g_free (filename);
+  }  
+
+  gtk_widget_destroy(dialog);
 
   r05_splice_from_freelist(arg_begin);
   r05_splice_to_freelist(arg_begin, arg_end);
