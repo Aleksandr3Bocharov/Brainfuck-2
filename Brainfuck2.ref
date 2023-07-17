@@ -25,7 +25,7 @@ $EXTERN Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec;
 *$FROM Platform
 $EXTERN Platform;
 
-*$FROM stdio
+*$FROM brainfuck2c
 $EXTERN PutChar, GetChar, OpenFileDialog;
 
 * Вывод справки
