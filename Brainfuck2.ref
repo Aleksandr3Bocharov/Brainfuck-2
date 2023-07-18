@@ -22,17 +22,14 @@ https://docs.gtk.org/gtk3/
 *$FROM LibraryEx
 $EXTERN Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec;
 
-*$FROM Platform
-$EXTERN Platform;
-
 *$FROM libraryc
-$EXTERN PutChar, GetChar, OpenFileDialog, SaveFileDialog;
+$EXTERN PutChar, GetChar, GTKInit, OpenFileDialog, SaveFileDialog, MessageBox;
 
 * Вывод справки
 Help {
-  = <Prout
-      '\nПрограмма "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла\n'
-      'и компилирует его в код на языке C в файл назначения.\n\n\n'
+  = <MessageBox
+      'Программа "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла\n'
+      'и компилирует его в код на языке C в файл назначения.'
     >
 }
 
@@ -277,23 +274,9 @@ cFileName {
     <Prout 'Файл с кодом на языке C ' e.cFileName ' сохранён.\n'>
 }
 
-/*
-
-<CHCP s.Platform> == 
-
-s.Platform ::= Windows | POSIX
-
-*/
-CHCP {
-  Windows,
-  <System 'chcp 65001'>: e.RetCode =
-    ;
-  POSIX =
-}
-
 $ENTRY Go {
   ,
-  <CHCP <Platform>>
+  <GTKInit>
   <Help>
   <Prout 'Открытие файла с кодом на языке Brainfuck.\n'>
   <bfFileName <OpenFileDialog>>: e.bfFileName,
