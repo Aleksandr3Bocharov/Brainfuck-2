@@ -26,7 +26,7 @@ $EXTERN Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec;
 $EXTERN Platform;
 
 *$FROM brainfuck2c
-$EXTERN PutChar, GetChar, OpenFileDialog;
+$EXTERN PutChar, GetChar, OpenFileDialog, SaveFileDialog;
 
 * Вывод справки
 Help {
@@ -261,6 +261,21 @@ bfFileName {
     e.bfFileName
 }
 
+/*
+
+<cFileName e.cFileName t.C_Code> ==
+
+e.cFileName ::= s.CHAR*
+t.C_Code ::= (s.CHAR+)
+
+*/
+cFileName {
+  t.C_Code =
+    <Prout 'ERROR (14): Файл с кодом на языке C не сохранён.\n'>;
+  e.cFileName t.C_Code =
+    <SaveFile (e.cFileName) t.C_Code>
+    <Prout 'Файл с кодом на языке C ' e.cFileName ' сохранён.\n'>
+}
 
 /*
 
@@ -280,7 +295,7 @@ $ENTRY Go {
   ,
   <CHCP <Platform>>
   <Help>
-  <Prout 'Открытие файла с кодом на языке Brainfuck.'>
+  <Prout 'Открытие файла с кодом на языке Brainfuck.\n'>
   <bfFileName <OpenFileDialog>>: e.bfFileName,
   <Prout 'Код на языке Brainfuck из исходного файла ' e.bfFileName ':\n'>
   /* Загрузка строк файла в e.Lines ::= (e.Line)*;  e.Line ::= s.CHAR* */
@@ -293,16 +308,20 @@ $ENTRY Go {
   {
     /* Если Fails, то завершение программы */
     Fails e.Errors =	
+      <Prout>
       <Map DoMapPrintErrors e.Errors> 
       <Prout 'FATAL_ERROR (99): Существуют несколько синтаксических ошибок.'>
       <Exit 99>;
     e.Tokens,
     /* Запуск синтаксического анализатора */
-    <Parser e.Tokens>: e.Parsing_Tree =
-      /* Запуск компилятора в код C и сохранение кода C в файл */
-      <SaveFile (e.bfFileName '.c') <CompiletoC e.Parsing_Tree>>
+    <Parser e.Tokens>: e.Parsing_Tree,
+    /* Запуск компилятора в код C */
+    <CompiletoC e.Parsing_Tree>: t.C_Code =
+      <Prout '\nСохранение файла с кодом на языке C.\n'>
+      /* Сохранение кода C в файл */
+      <cFileName <SaveFileDialog> t.C_Code>
       /* Запуск интерпретатора */
-      <Prout>
+      <Prout 'Запуск интерпретатора.\n'>
       <Interpretator e.Parsing_Tree>
   }
 }

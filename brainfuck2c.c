@@ -106,10 +106,10 @@ R05_DEFINE_ENTRY_FUNCTION(OpenFileDialog, "OpenFileDialog") {
   dialog = gtk_file_chooser_dialog_new("Открыть файл",
                                       NULL,
                                       action,
-                                      ("Отмена"),
-                                      GTK_RESPONSE_CANCEL,
                                       ("Открыть"),
                                       GTK_RESPONSE_ACCEPT,
+                                      ("Отмена"),
+                                      GTK_RESPONSE_CANCEL,
                                       NULL);
 
   res = gtk_dialog_run(GTK_DIALOG(dialog));
@@ -118,9 +118,64 @@ R05_DEFINE_ENTRY_FUNCTION(OpenFileDialog, "OpenFileDialog") {
     char *filename;
     GtkFileChooser *chooser = GTK_FILE_CHOOSER(dialog);
     filename = gtk_file_chooser_get_filename(chooser); 
+
     r05_alloc_string(filename);
+
     g_free (filename);
   }  
+
+  gtk_widget_destroy(dialog);
+
+  r05_splice_from_freelist(arg_begin);
+  r05_splice_to_freelist(arg_begin, arg_end);
+}
+
+/*
+
+<SaveFileDialog> == e.cFileName
+
+e.cFileName ::= s.CHAR*
+
+*/
+R05_DEFINE_ENTRY_FUNCTION(SaveFileDialog, "SaveFileDialog") {
+  struct r05_node *callee = arg_begin->next;
+
+  if (callee->next != arg_end)
+  {
+    r05_recognition_impossible();
+  }
+
+  r05_reset_allocator();
+
+  GtkWidget *dialog;
+  GtkFileChooser *chooser;
+  GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_SAVE;
+  gint res;
+
+  dialog = gtk_file_chooser_dialog_new("Сохранить файл",
+                                      NULL,
+                                      action,
+                                      ("Сохранить"),
+                                      GTK_RESPONSE_ACCEPT,
+                                      ("Отмена"),
+                                      GTK_RESPONSE_CANCEL,
+                                      NULL);
+  chooser = GTK_FILE_CHOOSER(dialog);
+
+  gtk_file_chooser_set_do_overwrite_confirmation(chooser, TRUE);
+
+  gtk_file_chooser_set_current_name(chooser, ("Untitled.c"));
+
+  res = gtk_dialog_run(GTK_DIALOG(dialog));
+  if (res == GTK_RESPONSE_ACCEPT)
+  {
+    char *filename;
+    filename = gtk_file_chooser_get_filename(chooser);
+    
+    r05_alloc_string(filename);
+
+    g_free(filename);
+  }
 
   gtk_widget_destroy(dialog);
 
