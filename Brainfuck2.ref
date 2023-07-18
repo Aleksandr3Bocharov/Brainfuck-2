@@ -27,7 +27,7 @@ $EXTERN PutChar, GetChar, GTKInit, OpenFileDialog, SaveFileDialog, MessageBox;
 
 * Вывод справки
 Help {
-  = <MessageBox
+  = <MessageBox Info
       'Программа "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла\n'
       'и компилирует его в код на языке C в файл назначения.'
     >
@@ -200,11 +200,11 @@ Tokenizer {
 
 DoMapTokenizer {
   ('[' s.Row s.Col) =
-    <Rp Fails12 '=' <Cp Fails12> ('SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' в строке: ' s.Row ' и столбце: ' s.Col '.')>
+    <Rp Fails12 '=' <Cp Fails12> ('SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' в строке: ' <Symb s.Row> ' и столбце: ' <Symb s.Col> '.')>
     '[';
   (']' s.Row s.Col),
   <Cp Fails12>: =
-    <Rp Fails11 '=' <Cp Fails11> ('SYNTAX_ERROR(11): Непредвиденный символ \']\' в строке: ' s.Row ' и столбце: ' s.Col '.')>
+    <Rp Fails11 '=' <Cp Fails11> ('SYNTAX_ERROR(11): Непредвиденный символ \']\' в строке: ' <Symb s.Row> ' и столбце: ' <Symb s.Col> '.')>
       ; 
   (']' s.Row s.Col),
   <Cp Fails12>: e.Fails12 (e.Fail12) =
@@ -225,19 +225,18 @@ DoMapTokenizer {
   (s.Char s.Row s.Col) =
 }
 	
-DoMapPrintErrors {
+DoMapErrors {
   (e.ErrorMessage) =
-    <Prout e.ErrorMessage>
+    e.ErrorMessage '\n'
 }
 
-DoMapPrint {
+DoMapLines {
   s.Row (e.Line) =
-    <Inc s.Row> 
-    <Prout s.Row ' ' e.Line>
-    <DelAccumulator <MapAccum DoMapPrint-Aux (s.Row 1) e.Line>>	
+    <Inc s.Row>
+    <DelAccumulator <MapAccum DoMapLines-Aux (s.Row 1) e.Line>>	
 }
 
-DoMapPrint-Aux {
+DoMapLines-Aux {
   (s.Row s.Col) s.Char =
     (s.Row <Inc s.Col>)
     (s.Char s.Row s.Col)
@@ -252,7 +251,7 @@ e.bfFileName ::= s.CHAR*
 */
 bfFileName {
   =
-    <Prout 'FATAL_ERROR (1): Файл с кодом на языке Brainfuck не выбран.'>
+    <MessageBox Error 'FATAL_ERROR (1): Файл с кодом на языке Brainfuck не выбран.'>
     <Exit 1>;
   e.bfFileName =
     e.bfFileName
@@ -268,43 +267,40 @@ t.C_Code ::= (s.CHAR+)
 */
 cFileName {
   t.C_Code =
-    <Prout 'ERROR (14): Файл с кодом на языке C не сохранён.\n'>;
+    <MessageBox Warning 'WARNING (14): Файл с кодом на языке C не сохранён.'>;
   e.cFileName t.C_Code =
     <SaveFile (e.cFileName) t.C_Code>
-    <Prout 'Файл с кодом на языке C ' e.cFileName ' сохранён.\n'>
+    <MessageBox Info 'Файл с кодом на языке C ' e.cFileName ' сохранён.'>
 }
 
 $ENTRY Go {
   ,
   <GTKInit>
   <Help>
-  <Prout 'Открытие файла с кодом на языке Brainfuck.\n'>
+  <MessageBox Info 'Открытие файла с кодом на языке Brainfuck.'>
   <bfFileName <OpenFileDialog>>: e.bfFileName,
-  <Prout 'Код на языке Brainfuck из исходного файла ' e.bfFileName ':\n'>
   /* Загрузка строк файла в e.Lines ::= (e.Line)*;  e.Line ::= s.CHAR* */
   <LoadFile e.bfFileName>: e.Lines,
-  /* Вывод строк файла на консоль и преобразование строк e.Lines => e.Symbols
+  /* Преобразование строк e.Lines => e.Symbols
   e.Symbols ::= (s.Char s.Row s.Col)*; s.Char ::= s.CHAR; s.Row ::= s.NUMBER; s.Col  ::= s.NUMBER */
-  <DelAccumulator <MapAccum DoMapPrint 1 e.Lines>>: e.Symbols,
+  <DelAccumulator <MapAccum DoMapLines 1 e.Lines>>: e.Symbols,
   /* Запуск лексического анализатора */
   <Tokenizer e.Symbols>:
   {
     /* Если Fails, то завершение программы */
-    Fails e.Errors =	
-      <Prout>
-      <Map DoMapPrintErrors e.Errors> 
-      <Prout 'FATAL_ERROR (99): Существуют несколько синтаксических ошибок.'>
+    Fails e.Errors = 
+      <MessageBox Error 'FATAL_ERROR (99): Существует одна или несколько синтаксических ошибок.\n' <Map DoMapErrors e.Errors>>
       <Exit 99>;
     e.Tokens,
     /* Запуск синтаксического анализатора */
     <Parser e.Tokens>: e.Parsing_Tree,
     /* Запуск компилятора в код C */
     <CompiletoC e.Parsing_Tree>: t.C_Code =
-      <Prout '\nСохранение файла с кодом на языке C.\n'>
+      <MessageBox Info 'Сохранение файла с кодом на языке C.'>
       /* Сохранение кода C в файл */
       <cFileName <SaveFileDialog e.bfFileName '.c'> t.C_Code>
       /* Запуск интерпретатора */
-      <Prout 'Запуск интерпретатора.\n'>
+      <MessageBox Info 'Запуск интерпретатора кода на языке Brainfuck.'>
       <Interpretator e.Parsing_Tree>
   }
 }
