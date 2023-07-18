@@ -1,7 +1,7 @@
 * Copyright 2023 Aleksandr Bocharov
 * Distributed under the Boost Software License, Version 1.0.
 * See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
-* 2023-07-17
+* 2023-07-18
 * https://github.com/Aleksandr3Bocharov/Brainfuck-2
 
 /* 
@@ -25,7 +25,7 @@ $EXTERN Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec;
 *$FROM Platform
 $EXTERN Platform;
 
-*$FROM brainfuck2c
+*$FROM libraryc
 $EXTERN PutChar, GetChar, OpenFileDialog, SaveFileDialog;
 
 * Вывод справки
@@ -319,7 +319,7 @@ $ENTRY Go {
     <CompiletoC e.Parsing_Tree>: t.C_Code =
       <Prout '\nСохранение файла с кодом на языке C.\n'>
       /* Сохранение кода C в файл */
-      <cFileName <SaveFileDialog> t.C_Code>
+      <cFileName <SaveFileDialog e.bfFileName '.c'> t.C_Code>
       /* Запуск интерпретатора */
       <Prout 'Запуск интерпретатора.\n'>
       <Interpretator e.Parsing_Tree>
