@@ -22,7 +22,7 @@ https://docs.gtk.org/gtk3/
 *$FROM LibraryEx
 $EXTERN Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec;
 
-*$FROM libraryc
+*$FROM brainfuck2c
 $EXTERN PutChar, GetChar, GTKInit, OpenFileDialog, SaveFileDialog, MessageBox;
 
 * Вывод справки
