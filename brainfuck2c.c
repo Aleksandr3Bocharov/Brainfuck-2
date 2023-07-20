@@ -6,10 +6,10 @@
 
 /* 
 
-Модуль "libraryc" с реализацией на языке C функций для программ на языке Рефал-05.
-https://github.com/Mazdaywik/Refal-05
+Модуль "brainfuck2c" с реализацией на языке C функций для программы "Brainfuck 2".
+https://github.com/Aleksandr3Bocharov/Brainfuck-2
 
-Модуль "libraryc" использует библиотеку GTK3.
+Модуль "brainfuck2c" использует библиотеку GTK3.
 https://docs.gtk.org/gtk3/
 
 */
