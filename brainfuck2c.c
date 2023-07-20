@@ -277,9 +277,8 @@ R05_DEFINE_ENTRY_FUNCTION(MessageBox, "MessageBox") {
   r05_reset_allocator();
   
   GtkWidget *dialog;
-  GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT;
   dialog = gtk_message_dialog_new(NULL,
-                                  flags,
+                                  GTK_DIALOG_DESTROY_WITH_PARENT,
                                   type,
                                   GTK_BUTTONS_OK,
                                   "%s",
