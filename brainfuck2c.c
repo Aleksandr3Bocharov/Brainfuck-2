@@ -149,79 +149,9 @@ R05_DEFINE_ENTRY_FUNCTION(OpenFileDialog, "OpenFileDialog") {
 
 /*
 
-<SaveFileDialog e.iFileName> == e.FileName
-
-e.iFileName ::= s.CHAR+
-e.FileName ::= s.CHAR*
-
-*/
-R05_DEFINE_ENTRY_FUNCTION(SaveFileDialog, "SaveFileDialog") {
-  struct r05_node *fname_b, *fname_e;
-  char ifilename[FILENAME_MAX + 1];
-  size_t ifilename_len;
-
-  /* сопоставление с образцом */
-  r05_prepare_argument(&fname_b, &fname_e, arg_begin, arg_end);
-  ifilename_len = r05_read_chars(ifilename, FILENAME_MAX, &fname_b, &fname_e);
-  ifilename[ifilename_len] = '\0';
-
-  if (ifilename_len == 0)
-    r05_recognition_impossible();
-
-  if (! r05_empty_seq(fname_b, fname_e))
-  {
-    struct r05_node *p = fname_b;
-    
-    while (p != fname_e->next && p->tag == R05_DATATAG_CHAR)
-      p = p->next;
-
-    if (p == fname_e->next)
-      r05_builtin_error("very long filename");
-    else
-      r05_recognition_impossible();
-  }
-
-  r05_reset_allocator();
-
-  GtkWidget *dialog;
-  GtkFileChooser *chooser;
-
-  dialog = gtk_file_chooser_dialog_new("Сохранить файл",
-                                      NULL,
-                                      GTK_FILE_CHOOSER_ACTION_SAVE,
-                                      GTK_STOCK_SAVE,
-                                      GTK_RESPONSE_ACCEPT,
-                                      GTK_STOCK_CANCEL,
-                                      GTK_RESPONSE_CANCEL,
-                                      NULL);
-  chooser = GTK_FILE_CHOOSER(dialog);
-
-  gtk_file_chooser_set_do_overwrite_confirmation(chooser, TRUE);
-
-  gtk_file_chooser_set_current_name(chooser, (ifilename));
-  
-  gint res = gtk_dialog_run(GTK_DIALOG(dialog));
-  if (res == GTK_RESPONSE_ACCEPT)
-  {
-    char *filename;
-    filename = gtk_file_chooser_get_filename(chooser);
-    
-    r05_alloc_string(filename);
-
-    g_free(filename);
-  }
-
-  gtk_widget_destroy(dialog);
-
-  r05_splice_from_freelist(arg_begin);
-  r05_splice_to_freelist(arg_begin, arg_end);
-}
-
-/*
-
 <MessageBox s.Type e.Message> ==
 
-s.Type ::= Info | Warning | Error
+s.Type ::= Info | Error
 e.Message ::= s.CHAR+
 
 */
@@ -239,8 +169,6 @@ R05_DEFINE_ENTRY_FUNCTION(MessageBox, "MessageBox") {
 
   if (!strcmp(ident->info.function->name, "Info"))
     type = GTK_MESSAGE_INFO;
-  else if (!strcmp(ident->info.function->name, "Warning"))
-    type = GTK_MESSAGE_WARNING;
   else if (!strcmp(ident->info.function->name, "Error"))
     type = GTK_MESSAGE_ERROR;  
   else

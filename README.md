@@ -5,5 +5,4 @@ https://github.com/Mazdaywik/Refal-05
 Программа "Brainfuck 2" использует библиотеку GTK3.
 https://docs.gtk.org/gtk3/
 
-Программа "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла
-и компилирует его в код на языке C в файл назначения.
+Программа "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла.

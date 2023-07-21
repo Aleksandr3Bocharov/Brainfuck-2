@@ -14,23 +14,19 @@ https://github.com/Mazdaywik/Refal-05
 Программа "Brainfuck 2" использует библиотеку GTK3.
 https://docs.gtk.org/gtk3/
 
-Программа "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла
-и компилирует его в код на языке C в файл назначения.
+Программа "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла.
 
 */
 
 *$FROM LibraryEx
-$EXTERN Map, MapAccum, DelAccumulator, LoadFile, SaveFile, Inc, Dec;
+$EXTERN Map, MapAccum, DelAccumulator, LoadFile, Inc, Dec;
 
 *$FROM brainfuck2c
-$EXTERN PutChar, GetChar, GTKInit, OpenFileDialog, SaveFileDialog, MessageBox;
+$EXTERN PutChar, GetChar, GTKInit, OpenFileDialog, MessageBox;
 
 * Вывод справки
 Help {
-  = <MessageBox Info
-      'Программа "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла\n'
-      'и компилирует его в код на языке C в файл назначения.'
-    >
+  = <MessageBox Info 'Программа "Brainfuck 2" интерпретирует код на языке Brainfuck из исходного файла.'>
 }
 
 /*
@@ -76,55 +72,6 @@ DoInterpretator {
   (e.LeafNode) e.Rest_Parsing_Tree (e.BeforeCells) s.Cell (e.AfterCells),
   <DoInterpretator e.LeafNode (e.BeforeCells) s.Cell (e.AfterCells)>: e.Cells =
     <DoInterpretator (e.LeafNode) e.Rest_Parsing_Tree e.Cells>   
-}
-
-/*
-
-<CompiletoC e.Parsing_Tree> == t.C_Code
-
-e.Parsing_Tree ::= t.LeafNode*
-t.LeafNode ::= s.Leaf | (t.LeafNode*)
-s.Leaf ::= Next | Prev | Inc | Dec | Write | Read
-t.C_Code ::= (s.CHAR+)
-
-*/
-CompiletoC {
-  e.Parsing_Tree =
-    (
-      '#include <memory.h>\n'
-      '#include <stdio.h>\n\n'
-      'int main(void)\n'
-      '{\n'
-      '     int i = 0;\n'
-      '     unsigned char arr[30000];\n'
-      '     memset(arr, 0, sizeof(arr));\n'
-      <DoCompiletoC ('     ') e.Parsing_Tree>
-      '     return 0;\n'
-      '}'
-    )	
-}
-
-DoCompiletoC {
-  (e.Spaces) =
-    ;
-  (e.Spaces) Next e.Rest_Parsing_Tree =
-    e.Spaces 'i++;\n' <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>;
-  (e.Spaces) Prev e.Rest_Parsing_Tree =
-    e.Spaces 'i--;\n' <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>;
-  (e.Spaces) Inc e.Rest_Parsing_Tree =
-    e.Spaces 'arr[i]++;\n' <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>;
-  (e.Spaces) Dec e.Rest_Parsing_Tree =
-    e.Spaces 'arr[i]--;\n' <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>;
-  (e.Spaces) Write e.Rest_Parsing_Tree =
-    e.Spaces 'putchar(arr[i]);\n' <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>;
-  (e.Spaces) Read e.Rest_Parsing_Tree =
-    e.Spaces 'arr[i] = getchar();\n' <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>;
-  (e.Spaces) (e.LeafNode) e.Rest_Parsing_Tree =
-    e.Spaces 'while(arr[i])\n' 
-    e.Spaces '{\n' 
-    <DoCompiletoC (e.Spaces '     ') e.LeafNode>
-    e.Spaces '}\n' 
-    <DoCompiletoC (e.Spaces) e.Rest_Parsing_Tree>
 }
 
 /* 
@@ -257,22 +204,6 @@ bfFileName {
     e.bfFileName
 }
 
-/*
-
-<cFileName e.cFileName t.C_Code> ==
-
-e.cFileName ::= s.CHAR*
-t.C_Code ::= (s.CHAR+)
-
-*/
-cFileName {
-  t.C_Code =
-    <MessageBox Warning 'WARNING (14): Файл с кодом на языке C не сохранён.'>;
-  e.cFileName t.C_Code =
-    <SaveFile (e.cFileName) t.C_Code>
-    <MessageBox Info 'Файл с кодом на языке C ' e.cFileName ' сохранён.'>
-}
-
 $ENTRY Go {
   ,
   <GTKInit>
@@ -293,12 +224,7 @@ $ENTRY Go {
       <Exit 99>;
     e.Tokens,
     /* Запуск синтаксического анализатора */
-    <Parser e.Tokens>: e.Parsing_Tree,
-    /* Запуск компилятора в код C */
-    <CompiletoC e.Parsing_Tree>: t.C_Code =
-      <MessageBox Info 'Сохранение файла с кодом на языке C.'>
-      /* Сохранение кода C в файл */
-      <cFileName <SaveFileDialog e.bfFileName '.c'> t.C_Code>
+    <Parser e.Tokens>: e.Parsing_Tree =
       /* Запуск интерпретатора */
       <MessageBox Info 'Запуск интерпретатора кода на языке Brainfuck.'>
       <Interpretator e.Parsing_Tree>
