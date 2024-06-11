@@ -1,0 +1,98 @@
+* Copyright 2024 Aleksandr Bocharov
+* Distributed under the Boost Software License, Version 1.0.
+* See accompanying file LICENSE_1_0.txt
+* or copy at http://www.boost.org/LICENSE_1_0.txt
+* 2024-06-11
+* https://github.com/Aleksandr3Bocharov/r2brainfuck
+
+*====================================================================
+* r2brainfuck
+*
+* Программа "r2brainfuck" написана
+* на языке программирования Рефал-2.
+* http://www.refal.net/~belous/refal2-r.htm
+*
+* Программа "r2brainfuck" использует
+* библиотеку расширения Рефал-2.
+* https://github.com/Aleksandr3Bocharov/r2libext
+*
+* Программа "r2brainfuck" использует 
+* библиотеку GTK3.
+* https://docs.gtk.org/gtk3/
+*
+* Программа "r2brainfuck" интерпретирует код
+* на языке Brainfuck из исходного файла.
+*====================================================================
+
+            START
+            ENTRY Go
+* from r2libext
+            EXTRN Map, MapAccum, DelAccum, LoadFile
+* from r2brainfuckc
+*           EXTRN PutChar, GetChar, GTKInit, OpenFileDialog, MessageBox
+* from r2lib
+            EXTRN Prout, M1, P1, Br, Dg, Cp
+
+* Вывод справки
+Help        = <Prout 'The programm "r2brainfuck" interprets code ' +
+            'on the language Brainfuck from source file.\n'>
+
+* <Tokenizer (SS S(N)R S(N)C)*> == E('><+-.,[]')T | /Fails/ (V(O)E)+
+Tokenizer +
+    ES      = <TokenizerAux (<Dg /Fails11/> <Dg /Fails12/>) +
+            <Map /DoMapTokenizer/ ES>>
+
+TokenizerAux +
+    () ET   = ET
+    (VE) ET = /Fails/ VE
+  
+  DoMapTokenizer {
+    ('[' s.Row s.Col) =
+      <Rp Fails12 '=' <Cp Fails12> ('SYNTAX_ERROR(12): Отсутствует символ \']\' для символа \'[\' в строке: ' <Symb s.Row> ' и столбце: ' <Symb s.Col> '.')>
+      '[';
+    (']' s.Row s.Col),
+    <Cp Fails12>: =
+      <Rp Fails11 '=' <Cp Fails11> ('SYNTAX_ERROR(11): Непредвиденный символ \']\' в строке: ' <Symb s.Row> ' и столбце: ' <Symb s.Col> '.')>
+        ; 
+    (']' s.Row s.Col),
+    <Cp Fails12>: e.Fails12 (e.Fail12) =
+      <Rp Fails12 '=' e.Fails12>
+      ']';   
+    ('>' s.Row s.Col) = 
+      '>'; 
+    ('<' s.Row s.Col) =
+      '<'; 
+    ('+' s.Row s.Col) =
+      '+'; 
+    ('-' s.Row s.Col) =
+      '-';
+    ('.' s.Row s.Col) =
+      '.';
+    (',' s.Row s.Col) =
+      ',';
+    (s.Char s.Row s.Col) =
+  }
+
+DoMapLines +
+    SR (EL) = <P1 SR> +
+            <DelAccum <MapAccum /DoMapLinesAux/ (SR /1/) EL>>	
+              
+DoMapLinesAux +
+    (SR SC) SS +
+            = (SR <P1 SC>) +
+            (SS SR SC)
+
+DoProutLine +
+    (EL)    = <Prout EL>
+
+Go          = <Help> +
+            <Prout 'The opening of the file "Test.b" ' +
+            'with code on the Brainfuck language.\n'> +
+* Загрузка строк файла в E.Lines := (E(O)L)*
+            <Br 'E.Lines' '=' +
+            <LoadFile /0/ 'Test.b'>> +
+* Преобразование E.Lines в E.Symbols := (S(O)S S(N)R S(N)C)* 
+            <Br 'E.Symbols' '=' +
+            <DelAccum <MapAccum /DoMapLines/ /1/ <Dg 'E.Lines'>>>>
+
+            END
